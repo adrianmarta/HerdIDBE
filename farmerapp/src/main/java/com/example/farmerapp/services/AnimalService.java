@@ -3,12 +3,14 @@ package com.example.farmerapp.services;
 
 
 import com.example.farmerapp.models.Animal;
+import com.example.farmerapp.models.User;
 import com.example.farmerapp.repositories.AnimalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AnimalService {

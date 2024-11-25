@@ -1,6 +1,7 @@
 package com.example.farmerapp.models;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -12,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -38,7 +40,8 @@ public class User {
 
     @Pattern(regexp = "\\d{10}", message = "Phone number must be a 10-digit number")
     private String phoneNumber;
+    @JsonManagedReference
     @DBRef // This annotation creates a reference to the Animal collection
-    private List<Animal> animals;
+    private List<Animal> animals=new ArrayList<>();
 }
 
