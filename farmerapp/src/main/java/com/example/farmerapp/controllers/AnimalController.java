@@ -69,4 +69,14 @@ public class AnimalController {
         animalService.deleteAnimal(id);
         return ResponseEntity.noContent().build();
     }
+    // Get animals by owner ID
+    @GetMapping("/owner/{ownerId}")
+    public ResponseEntity<List<Animal>> getAnimalsByOwnerId(@PathVariable String ownerId) {
+        List<Animal> animals = animalService.getAnimalByUserId(ownerId);
+        if (animals.isEmpty()) {
+            return ResponseEntity.status(404).body(null);
+        }
+        return ResponseEntity.ok(animals);
+    }
+
 }
