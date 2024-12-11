@@ -51,5 +51,8 @@ public class AnimalService {
     {
        return animalRepository.findByOwnerId(id);
     }
+    public List<Animal> getAnimalsByIds(List<String> animalIds) {
+        return animalRepository.findAllById(animalIds);
+    }
 }
 

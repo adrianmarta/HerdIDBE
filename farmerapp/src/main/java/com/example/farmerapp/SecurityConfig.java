@@ -16,7 +16,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .requestMatchers("/api/auth/login", "/api/users/**","api/animals/**").permitAll() // Updated to requestMatchers
+                .requestMatchers("/api/auth/login", "/api/users/**","api/animals/**","api/folders/**").permitAll() // Updated to requestMatchers
                 .anyRequest().authenticated() // Require authentication for other routes
                 .and()
                 .csrf().disable() // Disable CSRF protection for JWT-based authentication (stateless)
