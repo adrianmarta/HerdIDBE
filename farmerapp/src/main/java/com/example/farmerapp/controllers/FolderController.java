@@ -51,6 +51,42 @@ public class FolderController {
             return ResponseEntity.status(404).body(null); // Owner not found
         }
     }
+    @GetMapping("/{folderId}/animals")
+    public ResponseEntity<?> getAnimalsInFolder(@PathVariable String folderId) {
+        Optional<Folder> folderOptional = folderService.getFolderById(folderId);
+
+        if (folderOptional.isPresent()) {
+            Folder folder = folderOptional.get();
+            List<Animal> animals = folder.getAnimals(); // Get animals from the folder
+            return ResponseEntity.ok(animals);
+        } else {
+            return ResponseEntity.status(404).body("Folder not found");
+        }
+    }
+    @PutMapping("/{folderId}/add-existing-animal/{animalId}")
+    public ResponseEntity<?> addExistingAnimalToFolder(@PathVariable String folderId, @PathVariable String animalId) {
+        Optional<Folder> folderOptional = folderService.getFolderById(folderId);
+        Optional<Animal> animalOptional = animalService.getAnimalById(animalId);
+
+        if (folderOptional.isPresent() && animalOptional.isPresent()) {
+            Folder folder = folderOptional.get();
+            Animal animal = animalOptional.get();
+
+            // Check if the animal is already in the folder
+            if (folder.getAnimals().contains(animal)) {
+                return ResponseEntity.status(400).body("Animal already exists in the folder.");
+            }
+
+            // Add the animal to the folder
+            folder.getAnimals().add(animal);
+            folderService.updateFolder(folderId, folder); // Save the updated folder
+
+            return ResponseEntity.ok(folder);
+        }
+
+        return ResponseEntity.status(404).body("Folder or Animal not found.");
+    }
+
 
     // Add animals to a folder
     @PutMapping("/{folderId}/add-animals")

@@ -42,6 +42,9 @@ public class AnimalService {
             throw new IllegalArgumentException("Animal not found for update.");
         }
     }
+    public boolean isAnimalExist(String animalId) {
+        return animalRepository.existsById(animalId);
+    }
 
     // Delete an animal
     public void deleteAnimal(String id) {

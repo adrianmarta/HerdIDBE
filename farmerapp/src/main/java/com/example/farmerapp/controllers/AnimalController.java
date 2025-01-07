@@ -78,5 +78,10 @@ public class AnimalController {
         }
         return ResponseEntity.ok(animals);
     }
+    @GetMapping("/exists/{animalId}")
+    public ResponseEntity<Boolean> checkAnimalExists(@PathVariable String animalId) {
+        boolean exists = animalService.isAnimalExist(animalId);
+        return ResponseEntity.ok(exists);
+    }
 
 }
