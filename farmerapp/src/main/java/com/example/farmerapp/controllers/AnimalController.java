@@ -50,6 +50,14 @@ public class AnimalController {
         Optional<Animal> animal = animalRepository.findById(id);
         return animal.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
+    @GetMapping("/list")
+    public ResponseEntity<List<Animal>> getAnimalsByIds(@RequestParam List<String> ids) {
+        List<Animal> animals = animalRepository.findAllById(ids);
+        if (animals.isEmpty()) {
+            return ResponseEntity.status(404).body(null);
+        }
+        return ResponseEntity.ok(animals);
+    }
 
 
     // Update an animal by ID

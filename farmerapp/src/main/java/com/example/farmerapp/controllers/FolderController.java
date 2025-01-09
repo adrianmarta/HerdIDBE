@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/folders")
@@ -35,6 +36,22 @@ public class FolderController {
             return ResponseEntity.status(404).body(null);
         }
         return ResponseEntity.ok(folders);
+    }
+    // Remove animals from a folder
+    @PutMapping("/{folderId}/remove-animals")
+    public ResponseEntity<Folder> removeAnimalsFromFolder(@PathVariable String folderId, @RequestBody List<String> animalIds) {
+        Optional<Folder> folderOptional = folderService.getFolderById(folderId);
+        if (folderOptional.isPresent()) {
+            Folder folder = folderOptional.get();
+            // Remove animals with specified IDs from the folder's animal list
+            List<Animal> updatedAnimals = folder.getAnimals().stream()
+                    .filter(animal -> !animalIds.contains(animal.getId()))
+                    .collect(Collectors.toList());
+            folder.setAnimals(updatedAnimals);
+            folderService.updateFolder(folderId, folder);
+            return ResponseEntity.ok(folder);
+        }
+        return ResponseEntity.status(404).body(null);
     }
 
     // Create a new folder
@@ -64,7 +81,13 @@ public class FolderController {
         }
     }
     @PutMapping("/{folderId}/add-existing-animal/{animalId}")
-    public ResponseEntity<?> addExistingAnimalToFolder(@PathVariable String folderId, @PathVariable String animalId) {
+    public ResponseEntity<?> addExistingAnimalToFolder(@PathVariable String folderId, @PathVariable String animalId,
+                                                       @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(403).body("Missing or invalid authorization header.");
+        }
+        // Log the token (be cautious about logging sensitive information in production)
+        System.out.println("Token: " + authorizationHeader);
         Optional<Folder> folderOptional = folderService.getFolderById(folderId);
         Optional<Animal> animalOptional = animalService.getAnimalById(animalId);
 
@@ -114,4 +137,6 @@ public class FolderController {
         folderService.deleteFolder(id);
         return ResponseEntity.noContent().build();
     }
+
+
 }
