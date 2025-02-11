@@ -1,6 +1,7 @@
 package com.example.farmerapp.controllers;
 
 import com.example.farmerapp.FolderRequest;
+import com.example.farmerapp.JwtUtil;
 import com.example.farmerapp.models.Folder;
 import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.User;
@@ -14,13 +15,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/folders")
 public class FolderController {
 
     @Autowired
     private FolderService folderService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Autowired
     private AnimalService animalService;
@@ -35,6 +38,29 @@ public class FolderController {
         if (folders.isEmpty()) {
             return ResponseEntity.status(404).body(null);
         }
+        return ResponseEntity.ok(folders);
+    }
+    @GetMapping("/user")
+    public ResponseEntity<List<Folder>> getFoldersByToken(
+            @RequestHeader("Authorization") String authHeader) {
+
+        // Extract token and remove "Bearer " prefix
+        String token = authHeader.replace("Bearer ", "");
+
+        // Validate token
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(null); // Unauthorized
+        }
+
+        // Extract user ID from token
+        String userId = jwtUtil.extractUserId(token);
+
+        // Fetch herds (folders) for this user
+        List<Folder> folders = folderService.getFoldersByUserId(userId);
+        if (folders.isEmpty()) {
+            return ResponseEntity.status(404).body(null);
+        }
+
         return ResponseEntity.ok(folders);
     }
     // Remove animals from a folder
@@ -56,18 +82,35 @@ public class FolderController {
 
     // Create a new folder
     @PostMapping
-    public ResponseEntity<Folder> createFolder(@RequestBody FolderRequest folderRequest) {
-        Optional<User> ownerOptional = userRepository.findById(folderRequest.getOwnerId());
+    public ResponseEntity<Folder> createFolder(
+            @RequestBody FolderRequest folderRequest,
+            @RequestHeader("Authorization") String authHeader) {
 
-        if (ownerOptional.isPresent()) {
-            User owner = ownerOptional.get();
-            Folder folder = new Folder(folderRequest.getName(), owner); // Create the folder with owner
-            Folder savedFolder = folderService.createFolder(folder); // Save folder
-            return ResponseEntity.ok(savedFolder);
-        } else {
+        // Extract token from the Authorization header (remove "Bearer " prefix)
+        String token = authHeader.replace("Bearer ", "");
+
+        // Validate the token
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(null); // Unauthorized
+        }
+
+        // Extract user ID from the token
+        String userId = jwtUtil.extractUserId(token);
+
+        // Find the user based on the extracted ID
+        Optional<User> ownerOptional = userRepository.findById(userId);
+        if (ownerOptional.isEmpty()) {
             return ResponseEntity.status(404).body(null); // Owner not found
         }
+
+        // Create and save the new folder
+        User owner = ownerOptional.get();
+        Folder folder = new Folder(folderRequest.getName(), owner);
+        Folder savedFolder = folderService.createFolder(folder);
+
+        return ResponseEntity.ok(savedFolder);
     }
+
     @GetMapping("/{folderId}/animals")
     public ResponseEntity<?> getAnimalsInFolder(@PathVariable String folderId) {
         Optional<Folder> folderOptional = folderService.getFolderById(folderId);
@@ -130,6 +173,22 @@ public class FolderController {
     public ResponseEntity<Folder> updateFolder(@PathVariable String id, @RequestBody Folder folder) {
         return ResponseEntity.ok(folderService.updateFolder(id, folder));
     }
+    @GetMapping("/compare/{folderId1}/{folderId2}")
+    public ResponseEntity<List<String>> compareFolders(
+            @PathVariable String folderId1,
+            @PathVariable String folderId2) {
+        try {
+            // Fetch the animals from the service and map to their IDs
+            List<String> animalIds = folderService.compareFolders(folderId1, folderId2)
+                    .stream()
+                    .map(Animal::getId) // Extract only the IDs
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(animalIds);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(null); // Folders not found
+        }
+    }
+
 
     // Delete a folder
     @DeleteMapping("/{id}")

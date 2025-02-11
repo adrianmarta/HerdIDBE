@@ -4,6 +4,7 @@ package com.example.farmerapp.services;
 
 
 import com.example.farmerapp.models.User;
+import com.example.farmerapp.models.UserDTO;
 import com.example.farmerapp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,24 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User updateUser(String id, User user) {
-        user.setId(id);
-        return userRepository.save(user);
+    public User updateUser(String id, UserDTO userDTO) {
+        Optional<User> optionalUser = userRepository.findById(id);
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
+            // Update only the allowed fields
+            user.setName(userDTO.getName());
+            user.setDob(userDTO.getDob());
+            user.setAddress(userDTO.getAddress());
+            user.setPhoneNumber(userDTO.getPhoneNumber());
+
+            return userRepository.save(user);
+        } else {
+            throw new IllegalArgumentException("User not found for update.");
+        }
     }
+
 
     public void deleteUser(String id) {
         userRepository.deleteById(id);

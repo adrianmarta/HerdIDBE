@@ -1,0 +1,144 @@
+/* ===========================
+   General Styling
+   =========================== */
+:root {
+  --primary: #2d9cdb; /* Blue Header */
+  --secondary: #27ae60; /* Green Buttons */
+  --neutral-bg: #f2f2f2; /* Light Background */
+  --text-color: #333333; /* Dark Text */
+  --white: #ffffff;
+}
+
+.herds-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--neutral-bg);
+}
+
+/* ===========================
+     Header
+     =========================== */
+.herds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 1rem;
+  width: 100%;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-btn {
+  background-color: var(--secondary);
+  border: none;
+  color: var(--white);
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ===========================
+     Herds Content
+     =========================== */
+.herds-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+/* ===========================
+     Buttons Container
+     =========================== */
+.buttons-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.registru-btn,
+.add-folder-btn,
+.delete-btn {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.registru-btn {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+.add-folder-btn {
+  background-color: var(--secondary);
+  color: var(--white);
+}
+
+.delete-btn {
+  background-color: #d93025;
+  color: var(--white);
+}
+
+.delete-btn:disabled {
+  background-color: #a1a1a1;
+  cursor: not-allowed;
+}
+
+/* ===========================
+     Herds List
+     =========================== */
+.herds-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.herd-card {
+  background: var(--white);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.herd-card.selected {
+  border: 2px solid var(--primary);
+}
+
+/* ===========================
+     Popup
+     =========================== */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.close-popup {
+  margin-top: 1rem;
+}

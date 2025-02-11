@@ -4,6 +4,7 @@ package com.example.farmerapp.controllers;
 import com.example.farmerapp.JwtUtil;
 import com.example.farmerapp.UserProfile;
 import com.example.farmerapp.models.User;
+import com.example.farmerapp.models.UserDTO;
 import com.example.farmerapp.repositories.UserRepository;
 import com.example.farmerapp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -65,10 +66,28 @@ public class UserController {
         return userService.createUser(user);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
-        return ResponseEntity.ok(userService.updateUser(id, user));
+    @PutMapping("/update")
+    public ResponseEntity<User> updateUser(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody UserDTO updatedUser) {
+
+        // Extract token and remove "Bearer " prefix
+        String token = authHeader.replace("Bearer ", "");
+
+        // Validate token
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(null); // Unauthorized
+        }
+
+        // Extract user ID from token
+        String userId = jwtUtil.extractUserId(token);
+
+        // Update user with the extracted ID
+        User updated = userService.updateUser(userId, updatedUser);
+
+        return ResponseEntity.ok(updated);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {

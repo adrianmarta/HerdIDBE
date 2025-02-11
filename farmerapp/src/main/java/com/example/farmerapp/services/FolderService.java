@@ -1,5 +1,6 @@
 package com.example.farmerapp.services;
 
+import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.Folder;
 import com.example.farmerapp.repositories.FolderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FolderService {
@@ -42,4 +44,21 @@ public class FolderService {
     public Optional<Folder> findByNameAndOwnerId(String name, String ownerId) {
         return folderRepository.findByNameAndOwnerId(name, ownerId);
     }
+    public List<Animal> compareFolders(String folderId1, String folderId2) {
+        Optional<Folder> folder1Opt = folderRepository.findById(folderId1);
+        Optional<Folder> folder2Opt = folderRepository.findById(folderId2);
+
+        if (folder1Opt.isPresent() && folder2Opt.isPresent()) {
+            List<Animal> folder1Animals = folder1Opt.get().getAnimals();
+            List<Animal> folder2Animals = folder2Opt.get().getAnimals();
+
+            // Return animals in folder1 that are not in folder2
+            return folder1Animals.stream()
+                    .filter(animal -> !folder2Animals.contains(animal))
+                    .collect(Collectors.toList());
+        } else {
+            throw new IllegalArgumentException("One or both folders not found.");
+        }
+    }
+
 }
