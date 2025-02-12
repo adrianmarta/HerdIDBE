@@ -5,6 +5,9 @@ import MainScreen from './MainScreen/MainScreen';
 import Profile from './Profile/Profile.jsx';
 import MyHerds from './Myherds/Myherds.jsx';
 import HerdDetails from './HerdDetails/HerdDetails.jsx';
+import SalePost from './SellPostCreate/SalePostCreate.jsx';
+import AllAnimals from './AllAnimals/AllAnimals.jsx';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -48,6 +51,14 @@ function App() {
         <Route
           path="/herd/:herdId"
           element={isAuthenticated ? <HerdDetails /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/create-sale-post"
+          element={isAuthenticated ? <SalePost /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/all-animals"
+          element={isAuthenticated ? <AllAnimals /> : <Navigate to="/" />}
         />
       </Routes>
     </BrowserRouter>

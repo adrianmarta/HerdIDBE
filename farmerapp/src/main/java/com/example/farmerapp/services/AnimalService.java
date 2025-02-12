@@ -55,7 +55,17 @@ public class AnimalService {
        return animalRepository.findByOwnerId(id);
     }
     public List<Animal> getAnimalsByIds(List<String> animalIds) {
-        return animalRepository.findAllById(animalIds);
+        System.out.println("Fetching animals for IDs: " + animalIds);
+
+        if (animalIds == null || animalIds.isEmpty()) {
+            System.out.println("❌ Error: animalIds list is NULL or empty");
+            return List.of();
+        }
+
+        List<Animal> animals = animalRepository.findAnimalsByIds(animalIds);
+        System.out.println("✔ Found Animals: " + animals.size());
+
+        return animals;
     }
 }
 

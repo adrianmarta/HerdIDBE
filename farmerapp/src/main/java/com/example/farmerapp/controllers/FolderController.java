@@ -158,14 +158,25 @@ public class FolderController {
     @PutMapping("/{folderId}/add-animals")
     public ResponseEntity<Folder> addAnimalsToFolder(@PathVariable String folderId, @RequestBody List<String> animalIds) {
         Optional<Folder> folderOptional = folderService.getFolderById(folderId);
-        if (folderOptional.isPresent()) {
-            Folder folder = folderOptional.get();
-            List<Animal> animalsToAdd = animalService.getAnimalsByIds(animalIds);  // Fetch animals by their IDs
-            folder.getAnimals().addAll(animalsToAdd);
-            folderService.updateFolder(folderId, folder);
-            return ResponseEntity.ok(folder);
+        if (folderOptional.isEmpty()) {
+            return ResponseEntity.status(404).body(null); // Folder not found
         }
-        return ResponseEntity.status(404).body(null);
+
+        Folder folder = folderOptional.get();
+        List<Animal> existingAnimals = folder.getAnimals(); // Get already added animals
+
+        List<Animal> animalsToAdd = animalService.getAnimalsByIds(animalIds) // Fetch animals by IDs
+                .stream()
+                .filter(animal -> !existingAnimals.contains(animal)) // Only add if not already in the folder
+                .toList();
+
+        if (animalsToAdd.isEmpty()) {
+            return ResponseEntity.status(400).body(null); // No new animals to add
+        }
+
+        folder.getAnimals().addAll(animalsToAdd);
+        folderService.updateFolder(folderId, folder);
+        return ResponseEntity.ok(folder);
     }
 
     // Update a folder

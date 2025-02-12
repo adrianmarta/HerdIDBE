@@ -1,55 +1,45 @@
 /* ===========================
-   1. Full Screen Layout
+   General Layout
    =========================== */
 .main-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  margin: 0;
-  overflow: hidden;
   background-color: #f7fafc;
 }
 
 /* ===========================
-     2. Header (Top Navigation)
+     Header (Fixed)
      =========================== */
-.header {
+.main-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #2d9cdb;
+  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #2d9cdb;
-  color: white;
-  padding: 1rem;
-  width: 100%;
-  height: 60px;
+  padding: 0 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
-.header-left {
+.main-header-left {
   display: flex;
   align-items: center;
 }
 
-.menu-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: white;
-  cursor: pointer;
-  margin-right: 1rem;
-}
-
-.app-title {
+.main-app-title {
   font-size: 1.5rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-.logout-btn {
+.main-logout-btn {
   background-color: #27ae60;
   border: none;
   color: white;
@@ -57,53 +47,39 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease-in-out;
 }
 
-.logout-btn:hover {
+.main-logout-btn:hover {
   background-color: #219653;
 }
 
 /* ===========================
-     3. Content Layout
+     Sidebar (Navigation)
      =========================== */
-.content-wrapper {
-  display: flex;
-  flex: 1;
-  height: calc(100vh - 60px);
-}
-
-/* ===========================
-     4. Sidebar (Drawer)
-     =========================== */
-.drawer {
+.main-drawer {
   width: 240px;
-  background-color: #ffffff;
+  background-color: white;
   border-right: 1px solid #cbd5e0;
-  display: flex;
-  flex-direction: column;
   position: fixed;
+  top: 60px;
   left: -240px;
-  height: 100vh;
+  height: calc(100vh - 60px);
   transition: left 0.3s ease-in-out;
+  z-index: 1100;
 }
 
-.drawer.open {
+.main-drawer.open {
   left: 0;
 }
 
-.drawer.closed {
-  left: -240px;
-}
-
-.drawer-buttons {
+.main-drawer-buttons {
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  flex-grow: 1;
 }
 
-.drawer-btn {
+.main-drawer-btn {
   background: none;
   border: none;
   text-align: left;
@@ -114,12 +90,12 @@
   width: 100%;
 }
 
-.drawer-btn:hover {
+.main-drawer-btn:hover {
   background-color: #e2e8f0;
 }
 
 /* ===========================
-     5. Main Content
+     Sale Posts Section
      =========================== */
 .main-content {
   flex: 1;
@@ -130,14 +106,56 @@
   text-align: center;
 }
 
-.main-content h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+.sale-posts-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
 }
 
-.main-content p {
+.sale-post-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s ease-in-out;
+}
+
+.sale-post-card:hover {
+  transform: translateY(-5px);
+}
+
+.sale-post-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 2px solid #ddd;
+}
+
+.sale-post-placeholder {
+  width: 100%;
+  height: 200px;
+  background-color: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1rem;
-  line-height: 1.5;
-  max-width: 700px;
-  margin: 0 auto;
+  color: #555;
+}
+
+.sale-post-content {
+  padding: 1rem;
+}
+
+.sale-post-content h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.sale-post-owner {
+  color: #555;
+  font-size: 0.9rem;
 }

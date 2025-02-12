@@ -7,8 +7,6 @@ function MyHerds() {
   const [herds, setHerds] = useState([]);
   const [selectedHerds, setSelectedHerds] = useState(new Set());
   const [error, setError] = useState('');
-  const [showPopup, setShowPopup] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,25 +66,6 @@ function MyHerds() {
     }
   };
 
-  const handleAddFolder = async () => {
-    if (!newFolderName.trim()) return;
-    const token = localStorage.getItem('jwt');
-
-    try {
-      const response = await axios.post(
-        'http://localhost:8080/api/folders',
-        { name: newFolderName },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setHerds([...herds, response.data]);
-      setShowPopup(false);
-      setNewFolderName('');
-    } catch (err) {
-      setError('Failed to create folder.');
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('jwt');
     navigate('/');
@@ -116,9 +95,7 @@ function MyHerds() {
           >
             Registru
           </button>
-          <button className="add-folder-btn" onClick={() => setShowPopup(true)}>
-            Add Folder
-          </button>
+          <button className="add-folder-btn">Add Folder</button>
           <button
             className="delete-btn"
             onClick={handleDeleteSelected}
@@ -131,46 +108,23 @@ function MyHerds() {
         {/* Herds List */}
         <div className="herds-list">
           {herds.map((herd) => (
-            <div
-              key={herd.id}
-              className={`herd-card ${
-                selectedHerds.has(herd.id) ? 'selected' : ''
-              }`}
-              onClick={() => handleToggleSelect(herd.id)}
-            >
-              <h3>{herd.name}</h3>
+            <div key={herd.id} className="herd-card">
+              {/* Checkbox for selection */}
+              <input
+                type="checkbox"
+                className="herd-checkbox"
+                checked={selectedHerds.has(herd.id)}
+                onChange={() => handleToggleSelect(herd.id)}
+                onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking checkbox
+              />
+
+              {/* Clickable herd name for navigation */}
+              <h3 onClick={() => navigate(`/herd/${herd.id}`)}>{herd.name}</h3>
               <p>Click to view animals</p>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Add Folder Popup */}
-      {showPopup && (
-        <div className="popup-overlay">
-          <div className="popup">
-            <h3>Create New Folder</h3>
-            <input
-              type="text"
-              className="popup-input"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder="Enter folder name"
-            />
-            <div className="popup-buttons">
-              <button className="confirm-btn" onClick={handleAddFolder}>
-                Create
-              </button>
-              <button
-                className="cancel-btn"
-                onClick={() => setShowPopup(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
