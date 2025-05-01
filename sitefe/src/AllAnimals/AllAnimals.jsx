@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Import styles
 import './AllAnimals.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMars, faVenus } from '@fortawesome/free-solid-svg-icons'; // Male & Female icons
+import { faMars, faVenus, faTrash } from '@fortawesome/free-solid-svg-icons'; // Trash icon for delete
 
 function AllAnimals() {
   const navigate = useNavigate();
@@ -26,13 +28,11 @@ function AllAnimals() {
     try {
       const response = await axios.get(
         'http://localhost:8080/api/animals/owner',
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setAnimals(response.data);
     } catch (error) {
-      setError('Failed to load animals.');
+      toast.error('❌ Failed to load animals.');
     }
   };
 
@@ -43,13 +43,11 @@ function AllAnimals() {
     try {
       const response = await axios.get(
         'http://localhost:8080/api/folders/user',
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setHerds(response.data);
     } catch (error) {
-      setError('Failed to load herds.');
+      toast.error('❌ Failed to load herds.');
     }
   };
 
@@ -59,6 +57,33 @@ function AllAnimals() {
         ? prev.filter((id) => id !== animalId)
         : [...prev, animalId]
     );
+  };
+
+  const addToHerd = async () => {
+    if (!selectedHerd || selectedAnimals.length === 0) return;
+
+    const token = localStorage.getItem('jwt');
+    if (!token) return;
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/api/folders/${selectedHerd}/add-animals`,
+        selectedAnimals,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success('✅ Animals successfully added to the herd.');
+      setSelectedAnimals([]);
+      setShowHerdPopup(false);
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        toast.error(
+          `❌ The following animals are already in the folder: ${error.response.data}`
+        );
+      } else {
+        toast.error('⚠ Something went wrong while adding animals to the herd.');
+      }
+    }
   };
 
   const deleteSelectedAnimals = async () => {
@@ -72,45 +97,30 @@ function AllAnimals() {
         `http://localhost:8080/api/animals/delete?animalIds=${selectedAnimals.join(
           ','
         )}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setAnimals(
         animals.filter((animal) => !selectedAnimals.includes(animal.id))
       );
       setSelectedAnimals([]);
+      toast.success('🗑 Selected animals have been deleted.');
     } catch (error) {
-      setError('Failed to delete selected animals.');
-    }
-  };
-
-  const addToHerd = async () => {
-    if (!selectedHerd || selectedAnimals.length === 0) return;
-
-    const token = localStorage.getItem('jwt');
-    if (!token) return;
-
-    try {
-      await axios.put(
-        `http://localhost:8080/api/folders/${selectedHerd}/add-animals`,
-        selectedAnimals,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setSelectedAnimals([]);
-      setShowHerdPopup(false);
-    } catch (error) {
-      setError('Failed to add animals to herd.');
+      toast.error('❌ Failed to delete selected animals.');
     }
   };
 
   return (
     <div className="animals-container">
-      {/* Header */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
+
       <header className="animals-header">
         <h1 className="logo" onClick={() => navigate('/main')}>
           Farmer App
@@ -126,16 +136,13 @@ function AllAnimals() {
         </button>
       </header>
 
-      {/* Content */}
       <div className="animals-content">
         <h2>All Animals</h2>
-        {error && <p className="error-message">{error}</p>}
 
-        {/* Buttons (Only Show When Animals Are Selected) */}
         {selectedAnimals.length > 0 && (
           <div className="buttons-container">
             <button className="delete-btn" onClick={deleteSelectedAnimals}>
-              Delete
+              <FontAwesomeIcon icon={faTrash} /> Delete
             </button>
             <button
               className="add-to-herd-btn"
@@ -146,7 +153,6 @@ function AllAnimals() {
           </div>
         )}
 
-        {/* Animals Grid (3 Columns) */}
         <div className="animals-grid">
           {animals.map((animal) => (
             <div
@@ -158,8 +164,6 @@ function AllAnimals() {
             >
               <div className="animal-info">
                 <span>{animal.id}</span>
-
-                {/* Gender Icon */}
                 {animal.gender === 'Female' ? (
                   <FontAwesomeIcon
                     icon={faVenus}
@@ -168,7 +172,6 @@ function AllAnimals() {
                 ) : (
                   <FontAwesomeIcon icon={faMars} className="gender-icon male" />
                 )}
-
                 <span className="animal-dob">{animal.birthDate}</span>
               </div>
             </div>
@@ -176,7 +179,6 @@ function AllAnimals() {
         </div>
       </div>
 
-      {/* Herd Selection Popup */}
       {showHerdPopup && (
         <div className="popup-overlay">
           <div className="popup">

@@ -80,6 +80,12 @@ function MainScreen({ setAuth }) {
             >
               Create Sale Post
             </button>
+            <button
+              className="main-drawer-btn"
+              onClick={() => navigate('/my-bids')}
+            >
+              My Bids
+            </button>
           </div>
         </nav>
 
@@ -96,7 +102,7 @@ function MainScreen({ setAuth }) {
                 <div
                   key={post.id}
                   className="sale-post-card"
-                  onClick={() => navigate(`/sale-post/${post.id}`)}
+                  onClick={() => navigate(`/sale-posts/${post.id}`)}
                 >
                   {/* Show Image if Available */}
                   {post.images && post.images.length > 0 ? (
@@ -115,6 +121,10 @@ function MainScreen({ setAuth }) {
                     <p>{post.description}</p>
                     <p>
                       <strong>Price:</strong> ${post.price}
+                    </p>
+                    <p>
+                      <strong>Expiry Date:</strong>{' '}
+                      {new Date(post.expiryDate).toLocaleDateString()}
                     </p>
                     <p className="sale-post-owner">
                       Posted by: {post.owner.name}

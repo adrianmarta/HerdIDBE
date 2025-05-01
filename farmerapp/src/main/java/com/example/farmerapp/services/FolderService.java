@@ -44,6 +44,12 @@ public class FolderService {
     public Optional<Folder> findByNameAndOwnerId(String name, String ownerId) {
         return folderRepository.findByNameAndOwnerId(name, ownerId);
     }
+    public List<Animal> getAnimalsInFolder(String folderId) {
+        Optional<Folder> folderOptional = folderRepository.findById(folderId);
+        return folderOptional.map(Folder::getAnimals).orElseThrow(() ->
+                new IllegalArgumentException("Folder not found.")
+        );
+    }
     public List<Animal> compareFolders(String folderId1, String folderId2) {
         Optional<Folder> folder1Opt = folderRepository.findById(folderId1);
         Optional<Folder> folder2Opt = folderRepository.findById(folderId2);

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -156,27 +157,31 @@ public class FolderController {
 
     // Add animals to a folder
     @PutMapping("/{folderId}/add-animals")
-    public ResponseEntity<Folder> addAnimalsToFolder(@PathVariable String folderId, @RequestBody List<String> animalIds) {
+    public ResponseEntity<?> addAnimalsToFolder(@PathVariable String folderId, @RequestBody List<String> animalIds) {
         Optional<Folder> folderOptional = folderService.getFolderById(folderId);
         if (folderOptional.isEmpty()) {
-            return ResponseEntity.status(404).body(null); // Folder not found
+            return ResponseEntity.status(404).body("Folder not found.");
         }
 
         Folder folder = folderOptional.get();
-        List<Animal> existingAnimals = folder.getAnimals(); // Get already added animals
+        List<Animal> existingAnimals = folderService.getAnimalsInFolder(folder.getId());
+        Set<String> existingAnimalIds = existingAnimals.stream().map(Animal::getId).collect(Collectors.toSet());
 
-        List<Animal> animalsToAdd = animalService.getAnimalsByIds(animalIds) // Fetch animals by IDs
-                .stream()
-                .filter(animal -> !existingAnimals.contains(animal)) // Only add if not already in the folder
+        List<String> alreadyAddedAnimalIds = animalIds.stream()
+                .filter(existingAnimalIds::contains)
                 .toList();
 
-        if (animalsToAdd.isEmpty()) {
-            return ResponseEntity.status(400).body(null); // No new animals to add
+        if (!alreadyAddedAnimalIds.isEmpty()) {
+            return ResponseEntity.status(409).body(
+                    String.join(", ", alreadyAddedAnimalIds)
+            );
         }
 
-        folder.getAnimals().addAll(animalsToAdd);
+        List<Animal> newAnimalsToAdd = animalService.getAnimalsByIds(animalIds);
+        folder.getAnimals().addAll(newAnimalsToAdd);
         folderService.updateFolder(folderId, folder);
-        return ResponseEntity.ok(folder);
+
+        return ResponseEntity.ok("All selected animals have been successfully added.");
     }
 
     // Update a folder

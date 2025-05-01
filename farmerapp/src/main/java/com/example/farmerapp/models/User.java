@@ -2,6 +2,7 @@ package com.example.farmerapp.models;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -21,11 +22,15 @@ import java.util.List;
 @Document(collection = "users")
 public class User {
     @Id
-    @Pattern(regexp = "\\d{10}", message = "ID must be a 10-digit number")
+    @Pattern(regexp = "^RO\\d{10}$", message = "ID must start with 'RO' followed by 10 digits")
     private String id;
+
     @NotNull
-    @Pattern(regexp = "\\d{10}", message = "ID must be a 10-digit number")
-    private String Cnp;
+    @Email
+    private String email;
+
+    @NotNull
+    private String password; // Hashed
 
     @NotNull
     @Size(min = 1, max = 100)
@@ -43,5 +48,8 @@ public class User {
     @JsonManagedReference
     @DBRef // This annotation creates a reference to the Animal collection
     private List<Animal> animals=new ArrayList<>();
+    @DBRef
+    private List<Bid> bids;
+
 }
 

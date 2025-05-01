@@ -3,7 +3,9 @@ package com.example.farmerapp.services;
 
 
 import com.example.farmerapp.models.Animal;
+import com.example.farmerapp.models.AnimalEvent;
 import com.example.farmerapp.models.User;
+import com.example.farmerapp.repositories.AnimalEventRepository;
 import com.example.farmerapp.repositories.AnimalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ public class AnimalService {
 
     @Autowired
     private AnimalRepository animalRepository;
+    @Autowired
+    private AnimalEventRepository animalEventRepository;
 
     // Create a new animal
     public Animal createAnimal(Animal animal) {
@@ -66,6 +70,26 @@ public class AnimalService {
         System.out.println("✔ Found Animals: " + animals.size());
 
         return animals;
+    }
+    public void addEventToAnimal(String animalId, AnimalEvent event) {
+        Optional<Animal> animalOpt = animalRepository.findById(animalId);
+        if (animalOpt.isPresent()) {
+            event.setAnimalId(animalId);
+            animalEventRepository.save(event);
+        } else {
+            throw new IllegalArgumentException("Animal not found.");
+        }
+    }
+
+    public void addPhotoToAnimal(String animalId, byte[] photo) {
+        Optional<Animal> animalOpt = animalRepository.findById(animalId);
+        if (animalOpt.isPresent()) {
+            Animal animal = animalOpt.get();
+            animal.getPhotos().add(photo);
+            animalRepository.save(animal);
+        } else {
+            throw new IllegalArgumentException("Animal not found.");
+        }
     }
 }
 

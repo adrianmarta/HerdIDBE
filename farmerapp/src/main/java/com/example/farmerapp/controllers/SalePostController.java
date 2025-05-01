@@ -9,11 +9,13 @@ import com.example.farmerapp.services.AnimalService;
 import com.example.farmerapp.services.SalePostService;
 import com.example.farmerapp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,51 +47,60 @@ public class SalePostController {
     }
 
     // Create a sale post
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createSalePost(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody SalePostRequest salePostRequest) {
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("price") double price,
+            @RequestParam(value = "animals", required = false) List<String> animals,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam("expiryDate")LocalDateTime expiryDate) {
 
-        String token = authHeader.replace("Bearer ", ""); // Remove "Bearer " prefix
-
+        String token = authHeader.replace("Bearer ", "");
         if (!jwtUtil.validateToken(token)) {
-            System.out.println("token");
             return ResponseEntity.status(401).body("Invalid or expired token");
         }
 
         String userId = jwtUtil.extractUserId(token);
         Optional<User> userOptional = userService.getUserById(userId);
-
         if (userOptional.isEmpty()) {
-            System.out.println("user");
             return ResponseEntity.status(404).body("User not found");
         }
 
         User user = userOptional.get();
-        System.out.println("Received Animal IDs: " + salePostRequest.getAnimals());
+        List<Animal> animalList = animalService.getAnimalsByIds(animals != null ? animals : List.of());
 
-        // Retrieve animals by IDs from the database
-        List<Animal> animals = animalService.getAnimalsByIds(salePostRequest.getAnimals());
-
-        if (animals.isEmpty()) {
-            System.out.println("animals");
-            return ResponseEntity.status(404).body("No valid animals found for given IDs");
+        List<byte[]> imageDataList = new ArrayList<>();
+        if (images != null) {
+            try {
+                for (MultipartFile image : images) {
+                    imageDataList.add(image.getBytes());
+                }
+            } catch (IOException e) {
+                return ResponseEntity.status(500).body("Error processing images");
+            }
         }
 
-        // Create SalePost with user and animals
-        SalePost salePost = new SalePost(
-                salePostRequest.getTitle(),
-                salePostRequest.getDescription(),
-                salePostRequest.getPrice(),
-                animals,
-                animals.size(), // Number of animals is derived from the list size
-                user, // Owner is the authenticated user
-                new ArrayList<>() // Empty image list initially
-        );
-
+        SalePost salePost = new SalePost(title, description, price, animalList, animalList.size(), user, imageDataList,expiryDate);
         SalePost savedPost = salePostService.createSalePost(salePost);
         return ResponseEntity.ok(savedPost);
     }
+    @GetMapping("/winner/{postId}")
+    public ResponseEntity<?> getWinningBid(@PathVariable String postId) {
+        Optional<SalePost> salePost = salePostService.getSalePostById(postId);
+
+        if (salePost.isEmpty()) {
+            return ResponseEntity.status(404).body("Sale post not found");
+        }
+
+        if (salePost.get().getWinnerBid() == null) {
+            return ResponseEntity.status(404).body("No winner selected yet.");
+        }
+
+        return ResponseEntity.ok(salePost.get().getWinnerBid());
+    }
+
     // ✅ New API: Get sale posts from other users
     @GetMapping("/others")
     public ResponseEntity<List<SalePost>> getSalePostsFromOtherUsers(
@@ -181,7 +192,8 @@ public class SalePostController {
                             owner.getName(),
                             owner.getPhoneNumber(),
                             owner.getAddress(),
-                            salePost.getImages()
+                            salePost.getImages(),
+                            salePost.getExpiryDate()
                     )
             );
         }
@@ -196,8 +208,9 @@ public class SalePostController {
         public String phone;
         public String location;
         public List<byte[]> images;
+        public LocalDateTime expiryDate;
 
-        public SalePostDetails(String title, String description, double price, String ownerName, String phone, String location, List<byte[]> images) {
+        public SalePostDetails(String title, String description, double price, String ownerName, String phone, String location, List<byte[]> images, LocalDateTime expiryDate) {
             this.title = title;
             this.description = description;
             this.price = price;
@@ -205,6 +218,7 @@ public class SalePostController {
             this.phone = phone;
             this.location = location;
             this.images = images;
+            this.expiryDate=expiryDate;
         }
     }
 }

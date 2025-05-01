@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -16,7 +18,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .requestMatchers("/api/auth/login", "/api/users/**","api/animals/**","api/folders/**","/api/folders/{folderId}/add-existing-animal/{animalId}","/api/sale-posts/**").permitAll() // Updated to requestMatchers
+                .requestMatchers("/api/auth/**", "/api/events/**","/api/users/**","/api/animals/**","api/folders/**","/api/folders/{folderId}/add-existing-animal/{animalId}","/api/sale-posts/**", "api/bids/**").permitAll() // Updated to requestMatchers
                 .anyRequest().authenticated() // Require authentication for other routes
                 .and()
                 .csrf().disable() // Disable CSRF protection for JWT-based authentication (stateless)
@@ -24,4 +26,9 @@ public class SecurityConfig {
 
         return http.build();
     }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 }

@@ -3,6 +3,7 @@ package com.example.farmerapp;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.ServletException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,7 +19,8 @@ import java.util.Collections;
 @WebFilter
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String SECRET_KEY = "my_secret_key"; // You should store this securely
+    @Value("${jwt.secret}")
+    private String secretKey;// You should store this securely
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -54,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // Validate the JWT token
     private boolean isValidToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
+            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
             return true; // Token is valid
         } catch (Exception e) {
             return false; // Token is invalid or expired
@@ -64,7 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // Extract the user (subject) from the JWT token
     private String getUserFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject(); // Get the username (subject) from the token

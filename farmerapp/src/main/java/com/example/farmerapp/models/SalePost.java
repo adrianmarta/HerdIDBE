@@ -1,11 +1,14 @@
 package com.example.farmerapp.models;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -25,14 +28,24 @@ public class SalePost {
     private int numberOfAnimals;
 
     @DBRef
-    private User owner; // Reference to the user
+    private User owner;
 
-    private List<byte[]> images; // Store actual image data as byte arrays
+    private List<byte[]> images;
 
-    public SalePost() {}
+    @DBRef
+    private List<Bid> bids;
+
+    private LocalDateTime expiryDate;
+
+    @DBRef
+    private Bid winnerBid; // ✅ Track the winning bid
+
+    private boolean isSold = false; // ✅ Mark as sold when a bid is approved
+
+
 
     public SalePost(String title, String description, double price, List<Animal> animals, int numberOfAnimals,
-                    User owner, List<byte[]> images) {
+                    User owner, List<byte[]> images, LocalDateTime expiryDate) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -40,5 +53,9 @@ public class SalePost {
         this.numberOfAnimals = numberOfAnimals;
         this.owner = owner;
         this.images = images;
+        this.expiryDate = expiryDate;
+        this.bids = new ArrayList<>();
     }
 }
+
+

@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -21,7 +23,10 @@ public class Animal {
     private String id; // Animal ID, which should be a 10-digit Romanian ID
 
     private String gender;
-
+    private String species;
+    private boolean producesMilk;
+    @DBRef
+    private List<AnimalEvent> events = new ArrayList<>();
     private String birthDate; // Stores month and year of birth
     @JsonBackReference
     @DBRef
@@ -29,13 +34,15 @@ public class Animal {
 
     // Default constructor (required by MongoDB)
     public Animal() {}
-
+    private List<byte[]> photos = new ArrayList<>();
     // Constructor with parameters
-    public Animal(String id, String gender, String birthDate, User owner) {
+    public Animal(String id, String gender, String birthDate, String species, boolean producesMilk, User owner) {
         this.id = id;
         this.gender = gender;
         this.birthDate = birthDate;
-        this.owner=owner;
+        this.species = species;
+        this.producesMilk = producesMilk;
+        this.owner = owner;
     }
 
 

@@ -5,13 +5,16 @@ import com.example.farmerapp.models.User;
 import com.example.farmerapp.repositories.UserRepository;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
-@CrossOrigin(origins = "http://localhost:5173") // <--- Add this
+@CrossOrigin(origins = "*") // <--- Add this
 @RestController
 @RequestMapping("/api/auth")
 public class LoginController {
@@ -21,39 +24,68 @@ public class LoginController {
 
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        // Validate the ID and CNP
-        Optional<User> user = userRepository.findById(loginRequest.getId());
+        Optional<User> userOpt = userRepository.findByIdAndEmail(
+                loginRequest.getId(), loginRequest.getEmail()
+        );
 
-        if (user.isEmpty()) {
+        if (userOpt.isEmpty()) {
             return ResponseEntity.status(404).body("User not found");
         }
 
-        // Assuming the CNP is stored in the user model
-        if (user.get().getCnp().equals(loginRequest.getCnp())) {
-            // Generate JWT token
-            String token = jwtUtil.generateToken(user.get().getId());
+        User user = userOpt.get();
 
-            return ResponseEntity.ok(Map.of("token", token));  // Send token as response
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(401).body("Invalid password");
         }
 
-        return ResponseEntity.status(401).body("Invalid CNP");
+        String token = jwtUtil.generateToken(user.getId());
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
+        if (userRepository.existsById(req.getId())) {
+            return ResponseEntity.badRequest().body("ID already exists.");
+        }
+
+        if (userRepository.existsByEmail(req.getEmail())) {
+            return ResponseEntity.badRequest().body("Email already exists.");
+        }
+
+        User user = new User();
+        user.setId(req.getId());
+        user.setEmail(req.getEmail());
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setName(req.getName());
+        user.setDob(req.getDob());
+        user.setAddress(req.getAddress());
+        user.setPhoneNumber(req.getPhoneNumber());
+
+        userRepository.save(user);
+        return ResponseEntity.ok("User registered successfully.");
     }
 
     @Getter
+    @Setter
     public static class LoginRequest {
-        // Getters and Setters
         private String id;
-        private String cnp;
+        private String email;
+        private String password;
 
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public void setCnp(String cnp) {
-            this.cnp = cnp;
-        }
+    }
+    @Setter
+    @Getter
+    public static class RegisterRequest {
+        private String id;
+        private String email;
+        private String password;
+        private String name;
+        private LocalDate dob;
+        private String address;
+        private String phoneNumber;
     }
 }

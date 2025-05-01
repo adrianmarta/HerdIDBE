@@ -13,4 +13,5 @@ public class SalePostRequest {
     private double price;
     private List<String> animals;
     private int numberofAnimals;// List of animal IDs from the frontend
+    private List<byte[]> images;
 }

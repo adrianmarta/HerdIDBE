@@ -1,33 +1,121 @@
-/* Full-page centering */
-.herd-details-page {
+/* ===========================
+   General Layout
+   =========================== */
+.herd-details-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center horizontally */
-  justify-content: center; /* Center vertically */
-  min-height: 100vh; /* Ensures it takes the full height */
+  min-height: 100vh;
   width: 100vw;
-  text-align: center;
-  padding: 2rem;
   background-color: #f7fafc;
-}
-
-/* Style the animals list */
-.animals-list {
-  display: flex;
-  flex-direction: column;
+  padding-top: 70px;
   align-items: center;
-  gap: 1rem; /* Adds space between items */
-  max-width: 600px; /* Limits width for better centering */
-  width: 100%;
 }
 
-/* Individual animal card */
-.animals-list li {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  list-style: none;
+/* ===========================
+       Header
+       =========================== */
+.herd-header {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  text-align: left;
+  height: 60px;
+  background-color: #2d9cdb;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* ===========================
+       Buttons (Delete/Remove)
+       =========================== */
+.buttons-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.delete-folder-btn,
+.delete-global-btn {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.delete-folder-btn {
+  background-color: #f39c12;
+  color: white;
+}
+
+.delete-folder-btn:hover {
+  background-color: #e67e22;
+}
+
+.delete-global-btn {
+  background-color: #d93025;
+  color: white;
+}
+
+.delete-global-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* ===========================
+       Animal Cards (3-COLUMN GRID)
+       =========================== */
+.animals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  width: 90%;
+  max-width: 1300px;
+}
+
+/* Animal Card */
+.animal-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s ease-in-out, transform 0.1s ease-in-out;
+  cursor: pointer;
+  font-size: 1rem;
+  border: 2px solid transparent;
+}
+
+/* Selection Highlight */
+.animal-card.selected {
+  background: rgba(45, 156, 219, 0.2);
+  border-color: #2d9cdb;
+  transform: scale(1.05);
+}
+
+.animal-card:hover {
+  background: #e8e5f1;
+}
+
+/* Gender Icons */
+.gender-icon {
+  font-size: 20px;
+  margin: 0 5px;
+}
+
+.gender-icon.female {
+  color: #e91e63;
+}
+
+.gender-icon.male {
+  color: #2196f3;
 }

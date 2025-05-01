@@ -2,6 +2,7 @@ package com.example.farmerapp.controllers;
 
 import com.example.farmerapp.JwtUtil;
 import com.example.farmerapp.models.Animal;
+import com.example.farmerapp.models.AnimalEvent;
 import com.example.farmerapp.models.User;
 import com.example.farmerapp.repositories.AnimalRepository;
 import com.example.farmerapp.repositories.UserRepository;
@@ -21,6 +22,7 @@ public class AnimalController {
     @Autowired
     private AnimalService animalService;
     @Autowired
+
     private UserRepository userRepository;
     @Autowired
     private AnimalRepository animalRepository;
@@ -46,7 +48,15 @@ public class AnimalController {
         }
         return ResponseEntity.status(404).body(null);
     }
-
+    @PostMapping("/{id}/add-event")
+    public ResponseEntity<String> addEventToAnimal(@PathVariable String id, @RequestBody AnimalEvent event) {
+        try {
+            animalService.addEventToAnimal(id, event);
+            return ResponseEntity.ok("Eveniment adăugat cu succes.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body("Animalul nu a fost găsit.");
+        }
+    }
     @GetMapping("/{id}")
     public ResponseEntity<Animal> getAnimalById(@PathVariable String id) {
         Optional<Animal> animal = animalRepository.findById(id);

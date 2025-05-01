@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Import Toastify styles
 import './SalePostCreate.css';
 
-function SalePost() {
+function SalePostCreate() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [herds, setHerds] = useState([]);
+  const [expiryDate, setExpiryDate] = useState('');
   const [selectedHerd, setSelectedHerd] = useState(null);
   const [animals, setAnimals] = useState([]);
   const [selectedAnimals, setSelectedAnimals] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [images, setImages] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchHerds();
+    fetchAllAnimals();
   }, []);
 
   const fetchHerds = async () => {
@@ -36,7 +41,24 @@ function SalePost() {
     }
   };
 
-  const fetchAnimals = async (herdId) => {
+  const fetchAllAnimals = async () => {
+    const token = localStorage.getItem('jwt');
+    if (!token) return;
+
+    try {
+      const response = await axios.get(
+        'http://localhost:8080/api/animals/owner',
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setAnimals(response.data);
+    } catch (error) {
+      setError('Error fetching all animals.');
+    }
+  };
+
+  const fetchAnimalsInHerd = async (herdId) => {
     const token = localStorage.getItem('jwt');
     if (!token) return;
 
@@ -50,7 +72,7 @@ function SalePost() {
       setAnimals(response.data);
       setSelectedHerd(herdId);
     } catch (error) {
-      setError('Error fetching animals.');
+      setError('Error fetching animals from herd.');
     }
   };
 
@@ -64,43 +86,55 @@ function SalePost() {
 
   const selectAllAnimals = () => {
     if (selectedAnimals.length === animals.length) {
-      setSelectedAnimals([]); // Deselect all if already selected
+      setSelectedAnimals([]);
     } else {
       setSelectedAnimals(animals.map((animal) => animal.id));
     }
   };
 
+  const handleImageUpload = (event) => {
+    const files = Array.from(event.target.files); // ✅ Convert FileList to Array
+    setImages(files);
+  };
+
   const confirmAnimalSelection = () => {
-    setShowPopup(false); // Close popup
+    setShowPopup(false);
+    toast.success('✅ Animals added to sale post.');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('jwt');
-    if (!token) return;
+    if (!token) return toast.error('❌ Unauthorized!');
 
-    const salePostData = {
-      title,
-      description,
-      price,
-      animals: selectedAnimals.map((id) => id.toString()),
-    };
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('price', price);
+    formData.append('expiryDate', expiryDate);
+    // Append all selected animals
+    selectedAnimals.forEach((id) => formData.append('animals', id));
+
+    // ✅ Append all images correctly
+    images.forEach((image) => formData.append('images', image));
 
     try {
-      await axios.post('http://localhost:8080/api/sale-posts', salePostData, {
+      await axios.post('http://localhost:8080/api/sale-posts', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
       });
+      toast.success('✅ Sale post created successfully!');
       navigate('/main');
     } catch (error) {
-      setError('Error creating sale post.');
+      console.error(error);
+      toast.error('❌ Error creating sale post.');
     }
   };
 
   return (
     <div className="sale-post-container">
+      <ToastContainer /> {/* Toastify Container */}
       {/* Header */}
       <header className="sale-post-header">
         <h1 className="sale-post-logo" onClick={() => navigate('/main')}>
@@ -116,7 +150,6 @@ function SalePost() {
           Logout
         </button>
       </header>
-
       {/* Sale Post Form */}
       <div className="sale-post-form-container">
         <h2>Create Sale Post</h2>
@@ -143,6 +176,13 @@ function SalePost() {
             onChange={(e) => setPrice(e.target.value)}
             required
           />
+          <input
+            type="datetime-local"
+            placeholder="Expiry Date & Time"
+            value={expiryDate}
+            onChange={(e) => setExpiryDate(e.target.value)}
+            required
+          />
 
           {/* Add Animals Button */}
           <button
@@ -158,27 +198,59 @@ function SalePost() {
             <p>Selected Animals: {selectedAnimals.length}</p>
           )}
 
+          {/* Image Upload */}
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageUpload}
+          />
+
+          {/* Image Previews */}
+          <div className="sale-post-images-preview">
+            {images.length > 0 && (
+              <>
+                <h3>Selected Images</h3>
+                <div className="sale-post-images-grid">
+                  {images.map((image, index) => (
+                    <img
+                      key={index}
+                      src={URL.createObjectURL(image)}
+                      alt={`Preview ${index}`}
+                      className="sale-post-image-preview"
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <button className="sale-post-submit" type="submit">
             Create Sale Post
           </button>
         </form>
       </div>
-
       {/* Animal Selection Popup */}
       {showPopup && (
         <div className="sale-post-popup">
           <div className="sale-post-popup-content">
-            <h3>Select Herd</h3>
+            <h3>Select Herd or "Registru"</h3>
             <div className="sale-post-herds">
+              <button key="registru" onClick={fetchAllAnimals}>
+                Registru (All Animals)
+              </button>
               {herds.map((herd) => (
-                <button key={herd.id} onClick={() => fetchAnimals(herd.id)}>
+                <button
+                  key={herd.id}
+                  onClick={() => fetchAnimalsInHerd(herd.id)}
+                >
                   {herd.name}
                 </button>
               ))}
             </div>
 
-            {/* Show Animals if Herd is Selected */}
-            {selectedHerd && (
+            {/* Show Animals */}
+            {animals.length > 0 && (
               <>
                 <h3>Select Animals</h3>
                 <button
@@ -223,4 +295,4 @@ function SalePost() {
   );
 }
 
-export default SalePost;
+export default SalePostCreate;
