@@ -33,27 +33,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    // ✅ Validate JWT Token
-    public Boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            System.out.println("Token validation failed: " + e.getMessage());
-            return false;
-        }
-    }
 
-    // ✅ Extract User ID from JWT Token
-    public String extractUserId(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
-    }
+
 }

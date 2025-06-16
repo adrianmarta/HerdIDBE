@@ -4,10 +4,12 @@ package com.example.farmerapp.services;
 
 import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.AnimalEvent;
+import com.example.farmerapp.models.AnimalUpdateDTO;
 import com.example.farmerapp.models.User;
 import com.example.farmerapp.repositories.AnimalEventRepository;
 import com.example.farmerapp.repositories.AnimalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +21,6 @@ public class AnimalService {
 
     @Autowired
     private AnimalRepository animalRepository;
-    @Autowired
-    private AnimalEventRepository animalEventRepository;
 
     // Create a new animal
     public Animal createAnimal(Animal animal) {
@@ -36,60 +36,62 @@ public class AnimalService {
     public Optional<Animal> getAnimalById(String id) {
         return animalRepository.findById(id);
     }
-
+public Animal saveAnimal(Animal animal)
+{
+    return animalRepository.save(animal);
+}
     // Update an animal
-    public Animal updateAnimal(String id, Animal animal) {
-        if (animalRepository.existsById(id)) {
-            animal.setId(id);  // Ensure the ID remains the same during update
+    public Animal updateAnimal(String id, AnimalUpdateDTO updateDTO) {
+        Optional<Animal> OptionalAnimal= animalRepository.findById(id);
+        if (OptionalAnimal.isPresent()){
+            Animal animal=OptionalAnimal.get();
+            animal.setGender(updateDTO.getGender());
+            animal.setSpecies(updateDTO.getSpecies());
+            animal.setProducesMilk(updateDTO.isProducesMilk());
+            animal.setBirthDate(updateDTO.getBirthDate());
+
             return animalRepository.save(animal);
-        } else {
-            throw new IllegalArgumentException("Animal not found for update.");
+        } else  {
+            throw new IllegalArgumentException("User not found for update.");
         }
     }
     public boolean isAnimalExist(String animalId) {
         return animalRepository.existsById(animalId);
     }
 
+    public List<Animal> searchAnimals(String query, String userId) {
+        String searchQuery = query.toLowerCase();
+        List<Animal> userAnimals = animalRepository.findByOwnerId(userId);
+        return userAnimals.stream()
+                .filter(animal ->
+                        animal.getId().toLowerCase().contains(searchQuery) ||
+                                (animal.getSpecies() != null &&
+                                        animal.getSpecies().toLowerCase().contains(searchQuery)) ||
+                                (animal.getBirthDate() != null &&
+                                        animal.getBirthDate().toLowerCase().contains(searchQuery))
+                )
+                .collect(Collectors.toList());
+    }
     // Delete an animal
     public void deleteAnimal(String id) {
         animalRepository.deleteById(id);
     }
+public void deleteAllAnimals(List<Animal> animals)
+{
+    animalRepository.deleteAll(animals);
+}
     public List<Animal> getAnimalByUserId(String id)
     {
        return animalRepository.findByOwnerId(id);
     }
     public List<Animal> getAnimalsByIds(List<String> animalIds) {
-        System.out.println("Fetching animals for IDs: " + animalIds);
-
         if (animalIds == null || animalIds.isEmpty()) {
-            System.out.println("❌ Error: animalIds list is NULL or empty");
             return List.of();
         }
-
         List<Animal> animals = animalRepository.findAnimalsByIds(animalIds);
-        System.out.println("✔ Found Animals: " + animals.size());
-
         return animals;
     }
-    public void addEventToAnimal(String animalId, AnimalEvent event) {
-        Optional<Animal> animalOpt = animalRepository.findById(animalId);
-        if (animalOpt.isPresent()) {
-            event.setAnimalId(animalId);
-            animalEventRepository.save(event);
-        } else {
-            throw new IllegalArgumentException("Animal not found.");
-        }
-    }
 
-    public void addPhotoToAnimal(String animalId, byte[] photo) {
-        Optional<Animal> animalOpt = animalRepository.findById(animalId);
-        if (animalOpt.isPresent()) {
-            Animal animal = animalOpt.get();
-            animal.getPhotos().add(photo);
-            animalRepository.save(animal);
-        } else {
-            throw new IllegalArgumentException("Animal not found.");
-        }
-    }
+
 }
 

@@ -4,6 +4,7 @@ import com.example.farmerapp.JwtUtil;
 import com.example.farmerapp.models.User;
 import com.example.farmerapp.repositories.UserRepository;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ import java.util.Optional;
 public class LoginController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository userService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -29,33 +30,24 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        Optional<User> userOpt = userRepository.findByIdAndEmail(
+        Optional<User> userOpt = userService.findByIdAndEmail(
                 loginRequest.getId(), loginRequest.getEmail()
         );
-
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(404).body("User not found");
         }
-
         User user = userOpt.get();
-
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             return ResponseEntity.status(401).body("Invalid password");
         }
-
         String token = jwtUtil.generateToken(user.getId());
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseEntity.ok(new LoginResponse(token));
     }
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        if (userRepository.existsById(req.getId())) {
+        if (userService.existsById(req.getId())) {
             return ResponseEntity.badRequest().body("ID already exists.");
         }
-
-        if (userRepository.existsByEmail(req.getEmail())) {
-            return ResponseEntity.badRequest().body("Email already exists.");
-        }
-
         User user = new User();
         user.setId(req.getId());
         user.setEmail(req.getEmail());
@@ -64,8 +56,7 @@ public class LoginController {
         user.setDob(req.getDob());
         user.setAddress(req.getAddress());
         user.setPhoneNumber(req.getPhoneNumber());
-
-        userRepository.save(user);
+        userService.save(user);
         return ResponseEntity.ok("User registered successfully.");
     }
 
@@ -88,4 +79,10 @@ public class LoginController {
         private String address;
         private String phoneNumber;
     }
+    @Getter
+    @AllArgsConstructor
+    public static class LoginResponse {
+        private String token;
+    }
+
 }

@@ -13,9 +13,7 @@ public class AnimalEventMapper {
         event.setAnimalId(animalId);
         event.setEventType(dto.getEventType());
         event.setEventDate(dto.getEventDate());
-
         Map<String, Object> details = new HashMap<>();
-
         switch (dto.getEventType()) {
             case "vaccination" -> {
                 VaccinationEventDTO v = (VaccinationEventDTO) dto;
@@ -32,8 +30,12 @@ public class AnimalEventMapper {
                 details.put("calfGender", b.getCalfGender());
                 details.put("notes", b.getNotes());
             }
+            case "death" -> {
+                DeathEventDTO d = (DeathEventDTO) dto;
+                details.put("causeOfDeath", d.getCauseOfDeath());
+                details.put("notes", d.getNotes());
+            }
         }
-
         event.setDetails(details);
         return event;
     }

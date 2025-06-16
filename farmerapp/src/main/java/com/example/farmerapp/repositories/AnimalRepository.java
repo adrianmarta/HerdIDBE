@@ -11,7 +11,7 @@ import java.util.List;
 public interface AnimalRepository extends MongoRepository<Animal, String> {
     // You can add custom query methods here if needed
     List<Animal> findByOwnerId(String ownerId);
-    List<Animal> findAllById(List<String> ids);
+
 
     @Query("{ '_id': { $in: ?0 } }")
     List<Animal> findAnimalsByIds(List<String> ids);

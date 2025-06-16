@@ -109,3 +109,19 @@ body {
   background-color: #a1a1a1;
   cursor: not-allowed;
 }
+
+.register-link {
+  text-align: center;
+  color: #4a5568;
+  margin-top: 1rem;
+}
+
+.register-link span {
+  color: #2d9cdb;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.register-link span:hover {
+  color: #1e7cc6;
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login/Login';
+import Register from './Register/Register';
 import MainScreen from './MainScreen/MainScreen';
 import Profile from './Profile/Profile.jsx';
 import MyHerds from './Myherds/Myherds.jsx';
@@ -9,6 +10,8 @@ import SalePost from './SellPostCreate/SalePostCreate.jsx';
 import AllAnimals from './AllAnimals/AllAnimals.jsx';
 import SalePostDetails from './SalePostDetails/SalePostDetails.jsx';
 import MyBids from './MyBids/MyBids.jsx';
+import MyFavorites from './MyFavorites/MyFavorites.jsx';
+import MyPosts from './MyPosts/MyPosts.jsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,6 +34,10 @@ function App() {
               <Login setAuth={setIsAuthenticated} />
             )
           }
+        />
+        <Route
+          path="/register"
+          element={isAuthenticated ? <Navigate to="/main" /> : <Register />}
         />
         <Route
           path="/main"
@@ -62,7 +69,6 @@ function App() {
           path="/sale-posts/:postId"
           element={isAuthenticated ? <SalePostDetails /> : <Navigate to="/" />}
         />
-
         <Route
           path="/all-animals"
           element={isAuthenticated ? <AllAnimals /> : <Navigate to="/" />}
@@ -70,6 +76,14 @@ function App() {
         <Route
           path="my-bids"
           element={isAuthenticated ? <MyBids /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/my-favorites"
+          element={isAuthenticated ? <MyFavorites /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/my-posts"
+          element={isAuthenticated ? <MyPosts /> : <Navigate to="/" />}
         />
       </Routes>
     </BrowserRouter>

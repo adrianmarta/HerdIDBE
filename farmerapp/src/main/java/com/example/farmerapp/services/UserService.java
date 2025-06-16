@@ -32,24 +32,25 @@ public class UserService {
 
     public User updateUser(String id, UserDTO userDTO) {
         Optional<User> optionalUser = userRepository.findById(id);
-
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-
-            // Update only the allowed fields
             user.setName(userDTO.getName());
             user.setDob(userDTO.getDob());
             user.setAddress(userDTO.getAddress());
             user.setPhoneNumber(userDTO.getPhoneNumber());
-
             return userRepository.save(user);
         } else {
             throw new IllegalArgumentException("User not found for update.");
         }
     }
+public User saveUser(User user){
+     return userRepository.save(user);
+}
+
 
 
     public void deleteUser(String id) {
+
         userRepository.deleteById(id);
     }
 }

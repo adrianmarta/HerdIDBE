@@ -1,31 +1,44 @@
 package com.example.farmerapp.controllers;
 
 import com.example.farmerapp.JwtUtil;
-import com.example.farmerapp.models.Animal;
-import com.example.farmerapp.models.AnimalEvent;
-import com.example.farmerapp.models.User;
+import com.example.farmerapp.models.*;
 import com.example.farmerapp.repositories.AnimalRepository;
 import com.example.farmerapp.repositories.UserRepository;
+import com.example.farmerapp.services.AnimalEventService;
 import com.example.farmerapp.services.AnimalService;
+import com.example.farmerapp.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.chrono.ChronoLocalDate;
+
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/animals")
 public class AnimalController {
-    @Autowired
-    private JwtUtil jwtUtil;
+
+    private static final Logger logger = LoggerFactory.getLogger(AnimalController.class);
+
     @Autowired
     private AnimalService animalService;
     @Autowired
-
-    private UserRepository userRepository;
+    private UserService userService;
     @Autowired
-    private AnimalRepository animalRepository;
+    private AnimalEventService eventService;
+
 
     // Get all animals
     @GetMapping
@@ -33,87 +46,125 @@ public class AnimalController {
         return animalService.getAllAnimals();
     }
 
-    // Get animal by ID
+
     @PostMapping
     public ResponseEntity<Animal> createAnimal(@RequestBody Animal animal) {
-        Optional<User> owner = userRepository.findById(animal.getOwner().getId());
+        String ownerId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Optional<User> owner = userService.getUserById(ownerId);
         if (owner.isPresent()) {
             animal.setOwner(owner.get());
             Animal savedAnimal = animalService.createAnimal(animal);
-            User user= owner.get();
+            User user = owner.get();
             user.getAnimals().add(animal);
-            userRepository.save(user);
-
+            userService.saveUser(user);
             return ResponseEntity.ok(savedAnimal);
         }
         return ResponseEntity.status(404).body(null);
     }
-    @PostMapping("/{id}/add-event")
-    public ResponseEntity<String> addEventToAnimal(@PathVariable String id, @RequestBody AnimalEvent event) {
+    @GetMapping("/by-event-type")
+    public ResponseEntity<List<Animal>> getAnimalsByEventType(
+            @RequestParam String eventType,
+            @RequestParam String eventValue
+            ) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
-            animalService.addEventToAnimal(id, event);
-            return ResponseEntity.ok("Eveniment adăugat cu succes.");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body("Animalul nu a fost găsit.");
+            List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
+            List<Animal> matchingAnimals = userAnimals.stream()
+                    .filter(animal -> {
+                        List<AnimalEvent> events = animal.getEvents();
+                        if (events == null) return false;
+                        return events.stream().anyMatch(event ->
+                                event.getEventType().equalsIgnoreCase(eventType) &&
+                                        event.getDetails().entrySet().stream()
+                                                .anyMatch(entry -> entry.getValue().toString().equalsIgnoreCase(eventValue))
+                        );
+                    })
+                    .collect(Collectors.toList());
+            if (matchingAnimals.isEmpty()) {
+                return ResponseEntity.status(404).body(null);
+            }
+            return ResponseEntity.ok(matchingAnimals);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
         }
     }
+    @PostMapping("/batch")
+    public ResponseEntity<Map<String, Object>> createAnimalsBatch(
+            @RequestBody List<Animal> animals
+    ) {
+        String ownerId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> optionalUser = userService.getUserById(ownerId);
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+        User owner = optionalUser.get();
+        int addedCount = 0;
+        int skippedCount = 0;
+        for (Animal animal : animals) {
+            if (animalService.isAnimalExist(animal.getId())) {
+                skippedCount++;
+                continue;
+            }
+            animal.setOwner(owner);
+            animalService.saveAnimal(animal);
+            owner.getAnimals().add(animal);
+            addedCount++;
+        }
+        userService.saveUser(owner);
+        Map<String, Object> result = new HashMap<>();
+        result.put("added", addedCount);
+        result.put("skipped", skippedCount);
+        result.put("total", animals.size());
+        return ResponseEntity.ok(result);
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<Animal> getAnimalById(@PathVariable String id) {
-        Optional<Animal> animal = animalRepository.findById(id);
+        Optional<Animal> animal = animalService.getAnimalById(id);
         return animal.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     @GetMapping("/list")
     public ResponseEntity<List<Animal>> getAnimalsByIds(@RequestParam List<String> ids) {
-        List<Animal> animals = animalRepository.findAllById(ids);
+        List<Animal> animals = animalService.getAnimalsByIds(ids);
         if (animals.isEmpty()) {
             return ResponseEntity.status(404).body(null);
         }
         return ResponseEntity.ok(animals);
     }
-
-
-    // Update an animal by ID
     @PutMapping("/{id}")
-    public ResponseEntity<Animal> updateAnimal(@PathVariable String id, @RequestBody Animal animal) {
-        try {
-            Animal updatedAnimal = animalService.updateAnimal(id, animal);
-            return ResponseEntity.ok(updatedAnimal);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(null);
-        }
+    public ResponseEntity<Animal> updateAnimal(@PathVariable String id, @RequestBody AnimalUpdateDTO updateDTO) {
+        return ResponseEntity.ok(animalService.updateAnimal(id, updateDTO));
     }
-
-    // Delete an animal by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAnimal(@PathVariable String id) {
         animalService.deleteAnimal(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/owner-animals")
+    public ResponseEntity<?> getMyAnimals() {
+        try {
+            String userId = (String) SecurityContextHolder.getContext()
+                    .getAuthentication().getPrincipal();
 
-    @GetMapping("/owner")
-    public ResponseEntity<?> getAnimalsByToken(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", ""); // Remove "Bearer " prefix
-
-        if (jwtUtil.validateToken(token)) {
-            String ownerId = jwtUtil.extractUserId(token); // Extract user ID from token
-            List<Animal> animals = animalService.getAnimalByUserId(ownerId);
+            List<Animal> animals = animalService.getAnimalByUserId(userId);
 
             if (animals.isEmpty()) {
-                return ResponseEntity.status(404).body("No animals found for this owner");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Nu s-au găsit animale pentru utilizatorul autentificat.");
             }
+
             return ResponseEntity.ok(animals);
-        } else {
-            return ResponseEntity.status(401).body("Invalid or expired token");
+
+        } catch (ClassCastException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Token invalid sau utilizator neautentificat.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("A apărut o eroare internă: " + e.getMessage());
         }
-    }
-    // Get animals by owner ID
-    @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<List<Animal>> getAnimalsByOwnerId(@PathVariable String ownerId) {
-        List<Animal> animals = animalService.getAnimalByUserId(ownerId);
-        if (animals.isEmpty()) {
-            return ResponseEntity.status(404).body(null);
-        }
-        return ResponseEntity.ok(animals);
     }
     @GetMapping("/exists/{animalId}")
     public ResponseEntity<Boolean> checkAnimalExists(@PathVariable String animalId) {
@@ -122,40 +173,125 @@ public class AnimalController {
     }
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteAnimalsByIds(
-            @RequestHeader("Authorization") String authHeader,
-            @RequestParam String animalIds) { // Accept as String and split manually
-
-        String token = authHeader.replace("Bearer ", ""); // Remove "Bearer " prefix
-
-        if (!jwtUtil.validateToken(token)) {
-            return ResponseEntity.status(401).body("Invalid or expired token");
-        }
-
-        String ownerId = jwtUtil.extractUserId(token); // Extract user ID from token
+            @RequestParam String animalIds) {
+        String ownerId = (String) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
         List<String> animalIdList = List.of(animalIds.split(",")); // Convert to list
-
-        System.out.println("Animal IDs received for deletion: " + animalIdList); // Debugging log
-
         List<Animal> animals = animalService.getAnimalsByIds(animalIdList);
-        System.out.println("Animals found: " + animals.size()); // Debugging log
-
         if (animals.isEmpty()) {
             return ResponseEntity.status(404).body("No animals found with the given IDs");
         }
-
-        // Check if all animals belong to the authenticated owner
         List<Animal> animalsToDelete = animals.stream()
                 .filter(animal -> animal.getOwner().getId().equals(ownerId))
                 .toList();
-
         if (animalsToDelete.isEmpty()) {
             return ResponseEntity.status(403).body("You are not authorized to delete these animals");
         }
-
-        animalRepository.deleteAll(animalsToDelete);
+        animalService.deleteAllAnimals(animalsToDelete);
         return ResponseEntity.ok("Successfully deleted " + animalsToDelete.size() + " animals");
     }
+    @GetMapping("/search")
+    public ResponseEntity<List<Animal>> searchAnimals(
+            @RequestParam String query) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Animal> animals = animalService.searchAnimals(query, userId);
+        if (animals.isEmpty()) {
+            return ResponseEntity.status(404).body(null);
+        }
+        return ResponseEntity.ok(animals);
+    }
+    @GetMapping("/species")
+    public ResponseEntity<List<Map<String, String>>> getAvailableSpecies() {
+        List<Map<String, String>> speciesList = Arrays.stream(AnimalSpecies.values())
+            .map(species -> {
+                Map<String, String> speciesMap = new HashMap<>();
+                speciesMap.put("value", species.name());
+                speciesMap.put("label", species.getDisplayName());
+                return speciesMap;
+            })
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(speciesList);
+    }
+    @GetMapping("/by-birth-date")
+    public ResponseEntity<List<Animal>> getAnimalsByBirthDate(
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @RequestHeader("Authorization") String token) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate start = LocalDate.parse(startDate, formatter);
+        LocalDate end = LocalDate.parse(endDate, formatter);
+        
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
+        
+        List<Animal> animals = userAnimals.stream()
+            .filter(animal -> {
+                List<AnimalEvent> events = eventService.getEventsByAnimalId(animal.getId());
+                if (events == null || events.isEmpty()) {
+                    return false;
+                }
+                
+                return events.stream()
+                    .anyMatch(event -> 
+                        "birth".equals(event.getEventType()) &&
+                        event.getEventDate() != null &&
+                        !event.getEventDate().isBefore(start) &&
+                        !event.getEventDate().isAfter(end)
+                    );
+            })
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(animals);
+    }
+    @GetMapping("/by-sickness")
+    public ResponseEntity<List<Animal>> getAnimalsBySickness(
+            @RequestParam String sicknessName,
+            @RequestHeader("Authorization") String token) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
+        
+        List<Animal> animals = userAnimals.stream()
+            .filter(animal -> {
+                List<AnimalEvent> events = eventService.getEventsByAnimalId(animal.getId());
+                if (events == null || events.isEmpty()) {
+                    return false;
+                }
 
+                return events.stream()
+                    .anyMatch(event -> 
+                        "sickness".equals(event.getEventType()) &&
+                        event.getDetails() != null &&
+                        sicknessName.equalsIgnoreCase((String) event.getDetails().get("diagnosis"))
+                    );
+            })
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(animals);
+    }
+    @GetMapping("/by-vaccination")
+    public ResponseEntity<List<Animal>> getAnimalsByVaccination(
+            @RequestParam String vaccineName,
+            @RequestHeader("Authorization") String token) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
+        
+        List<Animal> animals = userAnimals.stream()
+            .filter(animal -> {
+                List<AnimalEvent> events = eventService.getEventsByAnimalId(animal.getId());
+                if (events == null || events.isEmpty()) {
+                    return false;
+                }
 
-
+                return events.stream()
+                    .anyMatch(event -> 
+                        "vaccination".equals(event.getEventType()) &&
+                        event.getDetails() != null &&
+                        vaccineName.equalsIgnoreCase((String) event.getDetails().get("vaccineName"))
+                    );
+            })
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(animals);
+    }
 }

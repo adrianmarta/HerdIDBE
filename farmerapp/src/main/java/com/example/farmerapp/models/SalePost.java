@@ -32,20 +32,10 @@ public class SalePost {
 
     private List<byte[]> images;
 
-    @DBRef
-    private List<Bid> bids;
-
-    private LocalDateTime expiryDate;
-
-    @DBRef
-    private Bid winnerBid; // ✅ Track the winning bid
-
-    private boolean isSold = false; // ✅ Mark as sold when a bid is approved
-
-
+    private LocalDateTime creationDate;
 
     public SalePost(String title, String description, double price, List<Animal> animals, int numberOfAnimals,
-                    User owner, List<byte[]> images, LocalDateTime expiryDate) {
+                    User owner, List<byte[]> images, LocalDateTime creationDate) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -53,9 +43,10 @@ public class SalePost {
         this.numberOfAnimals = numberOfAnimals;
         this.owner = owner;
         this.images = images;
-        this.expiryDate = expiryDate;
-        this.bids = new ArrayList<>();
+        this.creationDate = creationDate;
     }
+
+    public SalePost() {}
 }
 
 

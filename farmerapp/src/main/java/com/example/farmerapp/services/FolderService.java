@@ -40,10 +40,7 @@ public class FolderService {
     public void deleteFolder(String id) {
         folderRepository.deleteById(id);
     }
-
-    public Optional<Folder> findByNameAndOwnerId(String name, String ownerId) {
-        return folderRepository.findByNameAndOwnerId(name, ownerId);
-    }
+    
     public List<Animal> getAnimalsInFolder(String folderId) {
         Optional<Folder> folderOptional = folderRepository.findById(folderId);
         return folderOptional.map(Folder::getAnimals).orElseThrow(() ->

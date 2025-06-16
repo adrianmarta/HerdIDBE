@@ -2,6 +2,7 @@ package com.example.farmerapp.services;
 
 import com.example.farmerapp.models.Bid;
 import com.example.farmerapp.models.SalePost;
+import com.example.farmerapp.models.SalePostFilterDTO;
 import com.example.farmerapp.repositories.BidRepository;
 import com.example.farmerapp.repositories.SalePostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,61 +47,53 @@ public class SalePostService {
             throw new IllegalArgumentException("Sale Post not found.");
         }
     }
-    public SalePost approveWinningBid(String postId, Bid winningBid) {
-        Optional<SalePost> optionalSalePost = salePostRepository.findById(postId);
-        if (optionalSalePost.isEmpty()) {
-            throw new IllegalArgumentException("Sale Post not found.");
-        }
 
-        SalePost salePost = optionalSalePost.get();
 
-        // ✅ Ensure only expired posts can be updated
-        if (LocalDateTime.now().isBefore(salePost.getExpiryDate())) {
-            throw new IllegalStateException("Cannot approve bids before expiry date.");
-        }
-
-        salePost.setWinnerBid(winningBid);
-        salePost.setSold(true);
-        return salePostRepository.save(salePost);
-    }
-    @Scheduled(fixedRate = 300000)
-    @Transactional
-    public void autoApproveExpiredBids() {
-        List<SalePost> expiredPosts = salePostRepository.findAll().stream()
-                .filter(post -> post.getExpiryDate().isBefore(LocalDateTime.now()) && !post.isSold())
-                .toList();
-
-        for (SalePost post : expiredPosts) {
-            List<Bid> bids = post.getBids();
-
-            if (!bids.isEmpty()) {
-                // ✅ Get the highest bid
-                Bid highestBid = bids.stream()
-                        .max(Comparator.comparingDouble(Bid::getBidAmount))
-                        .orElse(null);
-
-                if (highestBid != null && !highestBid.isWinner()) {
-                    highestBid.setWinner(true);
-                    bidRepository.save(highestBid);
-
-                    post.setWinnerBid(highestBid);
-                    post.setSold(true);
-                    salePostRepository.save(post);
-
-                    // ✅ Notify the winner
-                    smsService.sendSms(
-                            highestBid.getBidder().getPhoneNumber(),
-                            "🎉 Congrats! You've automatically won the bid for " + post.getTitle() + "."
-                    );
-                }
-            }
-        }
-    }
     public void deleteSalePost(String id) {
         salePostRepository.deleteById(id);
     }
 
     public List<SalePost> getSalePostsByOwner(String ownerId) {
         return salePostRepository.findByOwnerId(ownerId);
+    }
+
+    public List<SalePost> getFilteredSalePosts(SalePostFilterDTO filter) {
+        List<SalePost> allPosts = salePostRepository.findAll();
+        
+        return allPosts.stream()
+            .filter(post -> {
+                // Filter out user's own posts
+                if (filter.getUserId() != null && post.getOwner().getId().equals(filter.getUserId())) {
+                    return false;
+                }
+
+                // Price filter
+                if (filter.getMinPrice() != null && post.getPrice() < filter.getMinPrice()) {
+                    return false;
+                }
+                if (filter.getMaxPrice() != null && post.getPrice() > filter.getMaxPrice()) {
+                    return false;
+                }
+
+                // Location filter
+                if (filter.getLocation() != null && !filter.getLocation().isEmpty()) {
+                    String postLocation = post.getOwner().getAddress();
+                    if (postLocation == null || !postLocation.toLowerCase().contains(filter.getLocation().toLowerCase())) {
+                        return false;
+                    }
+                }
+
+                // Species filter
+                if (filter.getSpecies() != null && !filter.getSpecies().isEmpty()) {
+                    boolean hasMatchingSpecies = post.getAnimals().stream()
+                        .anyMatch(animal -> filter.getSpecies().equals(animal.getSpecies()));
+                    if (!hasMatchingSpecies) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            .toList();
     }
 }

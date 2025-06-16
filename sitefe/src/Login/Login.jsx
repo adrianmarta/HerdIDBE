@@ -5,7 +5,8 @@ import './Login.css';
 
 function Login({ setAuth }) {
   const [id, setId] = useState('');
-  const [cnp, setCnp] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,21 +21,21 @@ function Login({ setAuth }) {
     try {
       const response = await axios.post(
         'http://localhost:8080/api/auth/login',
-        { id, cnp },
+        { id, email, password },
         { headers: { 'Content-Type': 'application/json' } }
       );
 
       const { token } = response.data;
       if (token) {
         localStorage.setItem('jwt', token);
-        setAuth(true); // Update authentication stat
+        setAuth(true); // Update authentication state
         navigate('/main');
       } else {
         setError('No token found in response.');
       }
     } catch (err) {
       if (err.response?.data) {
-        setError(err.response.data); // e.g. "User not found" or "Invalid CNP"
+        setError(err.response.data); // e.g. "User not found" or "Invalid password"
       } else {
         setError(err.message);
       }
@@ -60,12 +61,23 @@ function Login({ setAuth }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="cnp">CNP</label>
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
             <input
               type="password"
-              id="cnp"
-              value={cnp}
-              onChange={(e) => setCnp(e.target.value)}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
@@ -75,6 +87,10 @@ function Login({ setAuth }) {
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
+
+          <p className="register-link">
+            Don't have an account? <span onClick={() => navigate('/register')}>Register here</span>
+          </p>
         </form>
       </div>
     </div>

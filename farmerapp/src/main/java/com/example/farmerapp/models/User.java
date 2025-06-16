@@ -24,32 +24,24 @@ public class User {
     @Id
     @Pattern(regexp = "^RO\\d{10}$", message = "ID must start with 'RO' followed by 10 digits")
     private String id;
-
     @NotNull
     @Email
     private String email;
-
     @NotNull
-    private String password; // Hashed
-
+    private String password;
     @NotNull
     @Size(min = 1, max = 100)
     private String name;
-
     @NotNull
     private LocalDate dob;
-
     @NotNull
     @Size(min = 1, max = 200)
     private String address;
-
     @Pattern(regexp = "\\d{10}", message = "Phone number must be a 10-digit number")
     private String phoneNumber;
     @JsonManagedReference
-    @DBRef // This annotation creates a reference to the Animal collection
-    private List<Animal> animals=new ArrayList<>();
     @DBRef
-    private List<Bid> bids;
+    private List<Animal> animals=new ArrayList<>();
 
 }
 

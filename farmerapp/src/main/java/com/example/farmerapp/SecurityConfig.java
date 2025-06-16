@@ -13,16 +13,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
+    }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .requestMatchers("/api/auth/**", "/api/events/**","/api/users/**","/api/animals/**","api/folders/**","/api/folders/{folderId}/add-existing-animal/{animalId}","/api/sale-posts/**", "api/bids/**").permitAll() // Updated to requestMatchers
+                .requestMatchers("/api/auth/**", "/api/events/**","/api/users/**","/api/animals/**","/api/folders/**","/api/statistics/**").permitAll()
                 .anyRequest().authenticated() // Require authentication for other routes
                 .and()
-                .csrf().disable() // Disable CSRF protection for JWT-based authentication (stateless)
-                .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Add JWT filter
+                .csrf().disable()
+                .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

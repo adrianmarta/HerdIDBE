@@ -20,7 +20,7 @@ public class Animal {
     // Getters and Setters
     @Id
     @Pattern(regexp = "^RO\\d{10}$", message = "ID must start with 'RO' followed by a 10-digit number")
-    private String id; // Animal ID, which should be a 10-digit Romanian ID
+    private String id;
 
     private String gender;
     private String species;
