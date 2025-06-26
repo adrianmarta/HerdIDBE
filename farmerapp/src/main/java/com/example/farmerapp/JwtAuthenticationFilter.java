@@ -20,7 +20,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Value("${jwt.secret}")
-    private String secretKey;// You should store this securely
+    private String secretKey;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    // Validate the JWT token
+
     private boolean isValidToken(String token) {
         try {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
@@ -55,13 +55,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    // Extract the user (subject) from the JWT token
+
     private String getUserFromToken(String token) {
         return Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody()
-                .getSubject(); // Get the username (subject) from the token
+                .getSubject();
     }
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

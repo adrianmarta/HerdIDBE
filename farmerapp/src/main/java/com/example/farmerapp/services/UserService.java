@@ -43,14 +43,10 @@ public class UserService {
             throw new IllegalArgumentException("User not found for update.");
         }
     }
-public User saveUser(User user){
+    public User saveUser(User user){
      return userRepository.save(user);
 }
-
-
-
     public void deleteUser(String id) {
-
         userRepository.deleteById(id);
     }
 }

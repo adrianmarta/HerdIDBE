@@ -36,4 +36,7 @@ public class AnimalEventService {
             throw new IllegalArgumentException("Animal not found.");
         }
     }
+    public void deleteEventsByIds(List<String> ids) {
+        eventRepository.deleteAllById(ids);
+    }
 }

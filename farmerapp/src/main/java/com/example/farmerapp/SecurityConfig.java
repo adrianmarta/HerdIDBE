@@ -21,7 +21,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .requestMatchers("/api/auth/**", "/api/events/**","/api/users/**","/api/animals/**","/api/folders/**","/api/statistics/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/events/**","/api/users/**","/api/animals/**","/api/folders/**","/api/statistics/**","/api/counting-sessions/**","/api/transfers/**").permitAll()
                 .anyRequest().authenticated() // Require authentication for other routes
                 .and()
                 .csrf().disable()

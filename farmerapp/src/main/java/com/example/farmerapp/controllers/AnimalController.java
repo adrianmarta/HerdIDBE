@@ -53,12 +53,16 @@ public class AnimalController {
 
         Optional<User> owner = userService.getUserById(ownerId);
         if (owner.isPresent()) {
-            animal.setOwner(owner.get());
-            Animal savedAnimal = animalService.createAnimal(animal);
-            User user = owner.get();
-            user.getAnimals().add(animal);
-            userService.saveUser(user);
-            return ResponseEntity.ok(savedAnimal);
+            try {
+                animal.setOwner(owner.get());
+                Animal savedAnimal = animalService.createAnimal(animal);
+                User user = owner.get();
+                user.getAnimals().add(animal);
+                userService.saveUser(user);
+                return ResponseEntity.ok(savedAnimal);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(409).body(null); // 409 Conflict for duplicate resource
+            }
         }
         return ResponseEntity.status(404).body(null);
     }

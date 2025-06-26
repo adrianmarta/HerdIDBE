@@ -1,7 +1,9 @@
 package com.example.farmerapp.services;
 
+import com.example.farmerapp.FolderRequest;
 import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.Folder;
+import com.example.farmerapp.models.User;
 import com.example.farmerapp.repositories.FolderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,10 @@ public class FolderService {
     @Autowired
     private FolderRepository folderRepository;
 
-    public Folder createFolder(Folder folder) {
+    public Folder createFolder(FolderRequest folderRequest, User owner) {
+        Folder folder=new Folder();
+        folder.setName(folderRequest.getName());
+        folder.setOwner(owner);
         return folderRepository.save(folder);
     }
 
@@ -28,9 +33,9 @@ public class FolderService {
         return folderRepository.findById(id);
     }
 
-    public Folder updateFolder(String id, Folder folder) {
-        if (folderRepository.existsById(id)) {
-            folder.setId(id);
+    public Folder updateFolder(String name, Folder folder) {
+        if (folderRepository.existsById(folder.getId())) {
+            folder.setName(name);
             return folderRepository.save(folder);
         } else {
             throw new IllegalArgumentException("Folder not found for update.");

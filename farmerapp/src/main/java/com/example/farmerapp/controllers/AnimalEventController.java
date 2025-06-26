@@ -141,4 +141,10 @@ public class AnimalEventController {
         return ResponseEntity.ok(vaccineNames);
     }
 
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteEventsBulk(@RequestBody List<String> ids) {
+        eventService.deleteEventsByIds(ids);
+        return ResponseEntity.ok("Evenimentele au fost șterse cu succes.");
+    }
+
 }

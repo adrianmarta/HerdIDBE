@@ -21,9 +21,15 @@ public class AnimalService {
 
     @Autowired
     private AnimalRepository animalRepository;
+    @Autowired
+    private UserService userService;
 
     // Create a new animal
     public Animal createAnimal(Animal animal) {
+        // Check if animal already exists in any user's list
+        if (animalRepository.findById(animal.getId()).isPresent()) {
+            throw new IllegalArgumentException("An animal with this ID already exists in the system.");
+        }
         return animalRepository.save(animal);
     }
 
@@ -55,6 +61,29 @@ public Animal saveAnimal(Animal animal)
             throw new IllegalArgumentException("User not found for update.");
         }
     }
+    public Animal changeOwner(String id, String ownerID) {
+        Optional<Animal> optionalAnimal = animalRepository.findById(id);
+        Optional<User> optionalNewOwner = userService.getUserById(ownerID);
+        if (optionalAnimal.isEmpty()) {
+            throw new IllegalArgumentException("Animal not found");
+        }
+        if (optionalNewOwner.isEmpty()) {
+            throw new IllegalArgumentException("User not found for changing.");
+        }
+        Animal animal = optionalAnimal.get();
+        User newOwner = optionalNewOwner.get();
+        User oldOwner = animal.getOwner();
+        if (oldOwner != null) {
+            oldOwner.getAnimals().removeIf(a -> a.getId().equals(animal.getId()));
+            userService.saveUser(oldOwner);
+        }
+        newOwner.getAnimals().add(animal);
+        animal.setOwner(newOwner);
+        animalRepository.save(animal);
+        userService.saveUser(newOwner);
+        return animal;
+    }
+
     public boolean isAnimalExist(String animalId) {
         return animalRepository.existsById(animalId);
     }

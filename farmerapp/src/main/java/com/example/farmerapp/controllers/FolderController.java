@@ -55,6 +55,7 @@ public class FolderController {
         }
         return ResponseEntity.status(404).body(null);
     }
+
     @PostMapping
     public ResponseEntity<Folder> createFolder(
             @RequestBody FolderRequest folderRequest) {
@@ -65,8 +66,8 @@ public class FolderController {
         }
 
         User owner = ownerOptional.get();
-        Folder folder = new Folder(folderRequest.getName(), owner);
-        Folder savedFolder = folderService.createFolder(folder);
+
+        Folder savedFolder = folderService.createFolder(folderRequest,owner);
         return ResponseEntity.ok(savedFolder);
     }
 
@@ -125,8 +126,9 @@ public class FolderController {
 
     // Update a folder
     @PutMapping("/{id}")
-    public ResponseEntity<Folder> updateFolder(@PathVariable String id, @RequestBody Folder folder) {
-        return ResponseEntity.ok(folderService.updateFolder(id, folder));
+    public ResponseEntity<Folder> updateFolder(@PathVariable String id, @RequestBody FolderRequest folderRequest) {
+        Optional<Folder> folder=folderService.getFolderById(id);
+        return ResponseEntity.ok(folderService.updateFolder(folderRequest.getName(),folder.get()));
     }
     @GetMapping("/compare/{folderId1}/{folderId2}")
     public ResponseEntity<List<String>> compareFolders(
