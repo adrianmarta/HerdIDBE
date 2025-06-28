@@ -20,7 +20,7 @@ public class Folder {
     private String id;
 
     @NotNull
-    private String name;  // Name of the folder/group
+    private String name;
 
     @JsonManagedReference
     @DBRef
@@ -28,13 +28,10 @@ public class Folder {
 
     @JsonManagedReference
     @DBRef
-    private List<Animal> animals = new ArrayList<>();  // List of animals in this folder
+    private List<Animal> animals = new ArrayList<>();
 
-    // Constructor
+
     public Folder() {}
 
-    public Folder(String name, User owner) {
-        this.name = name;
-        this.owner = owner;
-    }
+
 }

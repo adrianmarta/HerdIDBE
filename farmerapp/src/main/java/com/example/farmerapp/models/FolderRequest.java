@@ -1,13 +1,10 @@
-package com.example.farmerapp;
+package com.example.farmerapp.models;
 
 import lombok.Getter;
 
 @Getter
 public class FolderRequest {
-    // Getters and setters
-    private String name;  // Folder name
-
-
+    private String name;
     public void setName(String name) {
         this.name = name;
     }

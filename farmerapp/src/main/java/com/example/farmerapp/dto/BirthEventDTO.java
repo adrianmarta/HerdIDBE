@@ -1,4 +1,3 @@
-// BirthEventDTO.java
 package com.example.farmerapp.dto;
 
 import lombok.Data;

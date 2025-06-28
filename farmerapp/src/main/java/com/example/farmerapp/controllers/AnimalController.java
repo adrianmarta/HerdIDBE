@@ -30,8 +30,6 @@ import java.time.chrono.ChronoLocalDate;
 @RequestMapping("/api/animals")
 public class AnimalController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AnimalController.class);
-
     @Autowired
     private AnimalService animalService;
     @Autowired
@@ -40,12 +38,11 @@ public class AnimalController {
     private AnimalEventService eventService;
 
 
-    // Get all animals
+
     @GetMapping
     public List<Animal> getAllAnimals() {
         return animalService.getAllAnimals();
     }
-
 
     @PostMapping
     public ResponseEntity<Animal> createAnimal(@RequestBody Animal animal) {
@@ -61,7 +58,7 @@ public class AnimalController {
                 userService.saveUser(user);
                 return ResponseEntity.ok(savedAnimal);
             } catch (IllegalArgumentException e) {
-                return ResponseEntity.status(409).body(null); // 409 Conflict for duplicate resource
+                return ResponseEntity.status(409).body(null);
             }
         }
         return ResponseEntity.status(404).body(null);
@@ -82,7 +79,7 @@ public class AnimalController {
                                 event.getEventType().equalsIgnoreCase(eventType) &&
                                         event.getDetails().entrySet().stream()
                                                 .anyMatch(entry -> entry.getValue().toString().equalsIgnoreCase(eventValue))
-                        );
+                        );//filtrare animale dupa un anumit eveniment
                     })
                     .collect(Collectors.toList());
             if (matchingAnimals.isEmpty()) {
@@ -107,7 +104,7 @@ public class AnimalController {
         int addedCount = 0;
         int skippedCount = 0;
         for (Animal animal : animals) {
-            if (animalService.isAnimalExist(animal.getId())) {
+            if (animalService.isAnimalExist(animal.getId(),ownerId)) {
                 skippedCount++;
                 continue;
             }
@@ -115,39 +112,39 @@ public class AnimalController {
             animalService.saveAnimal(animal);
             owner.getAnimals().add(animal);
             addedCount++;
-        }
+        }// creare animale mai multe deodata
         userService.saveUser(owner);
         Map<String, Object> result = new HashMap<>();
         result.put("added", addedCount);
         result.put("skipped", skippedCount);
         result.put("total", animals.size());
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(result);// returneaza un raport
     }
 
 
     @GetMapping("/{id}")
     public ResponseEntity<Animal> getAnimalById(@PathVariable String id) {
-        Optional<Animal> animal = animalService.getAnimalById(id);
+        Optional<Animal> animal = animalService.getAnimalById(id);//returneaza  dupa id
         return animal.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     @GetMapping("/list")
-    public ResponseEntity<List<Animal>> getAnimalsByIds(@RequestParam List<String> ids) {
+    public ResponseEntity<List<Animal>> getAnimalsByIds(@RequestParam List<String> ids) {//returneaza lista de animale
         List<Animal> animals = animalService.getAnimalsByIds(ids);
         if (animals.isEmpty()) {
             return ResponseEntity.status(404).body(null);
         }
         return ResponseEntity.ok(animals);
     }
-    @PutMapping("/{id}")
+    @PutMapping("/{id}")// update animal
     public ResponseEntity<Animal> updateAnimal(@PathVariable String id, @RequestBody AnimalUpdateDTO updateDTO) {
         return ResponseEntity.ok(animalService.updateAnimal(id, updateDTO));
     }
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")// sterge animal
     public ResponseEntity<Void> deleteAnimal(@PathVariable String id) {
         animalService.deleteAnimal(id);
         return ResponseEntity.noContent().build();
     }
-    @GetMapping("/owner-animals")
+    @GetMapping("/owner-animals")// returneaza animalele unui utilizator dupa token
     public ResponseEntity<?> getMyAnimals() {
         try {
             String userId = (String) SecurityContextHolder.getContext()
@@ -172,10 +169,12 @@ public class AnimalController {
     }
     @GetMapping("/exists/{animalId}")
     public ResponseEntity<Boolean> checkAnimalExists(@PathVariable String animalId) {
-        boolean exists = animalService.isAnimalExist(animalId);
+        String userId = (String) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        boolean exists = animalService.isAnimalExist(animalId,userId);// verifica daca animalul exista in lista unui utilizator
         return ResponseEntity.ok(exists);
     }
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete")// sterge o lista de animale
     public ResponseEntity<?> deleteAnimalsByIds(
             @RequestParam String animalIds) {
         String ownerId = (String) SecurityContextHolder.getContext()
@@ -195,7 +194,7 @@ public class AnimalController {
         animalService.deleteAllAnimals(animalsToDelete);
         return ResponseEntity.ok("Successfully deleted " + animalsToDelete.size() + " animals");
     }
-    @GetMapping("/search")
+    @GetMapping("/search")// cauta animalele dupa query
     public ResponseEntity<List<Animal>> searchAnimals(
             @RequestParam String query) {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -205,7 +204,7 @@ public class AnimalController {
         }
         return ResponseEntity.ok(animals);
     }
-    @GetMapping("/species")
+    @GetMapping("/species")// returneaza speciile de animale
     public ResponseEntity<List<Map<String, String>>> getAvailableSpecies() {
         List<Map<String, String>> speciesList = Arrays.stream(AnimalSpecies.values())
             .map(species -> {
@@ -217,7 +216,7 @@ public class AnimalController {
             .collect(Collectors.toList());
         return ResponseEntity.ok(speciesList);
     }
-    @GetMapping("/by-birth-date")
+    @GetMapping("/by-birth-date") // returneaza animale care au data de nastere intr-o perioada
     public ResponseEntity<List<Animal>> getAnimalsByBirthDate(
             @RequestParam String startDate,
             @RequestParam String endDate,
@@ -248,10 +247,9 @@ public class AnimalController {
             
         return ResponseEntity.ok(animals);
     }
-    @GetMapping("/by-sickness")
+    @GetMapping("/by-sickness") // returneaza animalele ce au o anumita boala
     public ResponseEntity<List<Animal>> getAnimalsBySickness(
-            @RequestParam String sicknessName,
-            @RequestHeader("Authorization") String token) {
+            @RequestParam String sicknessName) {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
         
@@ -273,7 +271,7 @@ public class AnimalController {
             
         return ResponseEntity.ok(animals);
     }
-    @GetMapping("/by-vaccination")
+    @GetMapping("/by-vaccination")// returneaza animalele cu un anumit vaccin
     public ResponseEntity<List<Animal>> getAnimalsByVaccination(
             @RequestParam String vaccineName,
             @RequestHeader("Authorization") String token) {

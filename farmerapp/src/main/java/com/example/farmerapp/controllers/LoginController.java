@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
-@CrossOrigin(origins = "*") // <--- Add this
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth")
 public class LoginController {

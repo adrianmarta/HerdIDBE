@@ -1,15 +1,9 @@
 package com.example.farmerapp.controllers;
 
 
-import com.example.farmerapp.JwtUtil;
-import com.example.farmerapp.SalePostDetails;
-import com.example.farmerapp.UserProfile;
-import com.example.farmerapp.models.Animal;
-import com.example.farmerapp.models.SalePost;
+import com.example.farmerapp.models.UserProfile;
 import com.example.farmerapp.models.User;
 import com.example.farmerapp.models.UserDTO;
-import com.example.farmerapp.repositories.UserRepository;
-import com.example.farmerapp.services.SalePostService;
 import com.example.farmerapp.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +23,13 @@ public class UserController {
         return userService.getAllUsers();
 
     }
+    @GetMapping("/exists/{id}")
+    public ResponseEntity<?> exists(@PathVariable String id)
+        {
+            return ResponseEntity.ok(userService.exists(id));
+        }
+
+
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile() {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

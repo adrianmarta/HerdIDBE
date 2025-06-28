@@ -1,4 +1,3 @@
-// BaseAnimalEventDTO.java
 package com.example.farmerapp.dto;
 
 import java.time.LocalDate;

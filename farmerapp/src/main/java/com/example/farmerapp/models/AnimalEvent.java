@@ -16,18 +16,12 @@ public class AnimalEvent {
     private String id;
 
     private String animalId;
-    private String eventType; // Ex: "tratament", "vaccin", "fatare"
+    private String eventType;
     private LocalDate eventDate;
 
-    // Custom fields depending on the event type
     private Map<String, Object> details;
 
     public AnimalEvent() {}
 
-    public AnimalEvent(String animalId, String eventType, LocalDate eventDate, Map<String, Object> details) {
-        this.animalId = animalId;
-        this.eventType = eventType;
-        this.eventDate = eventDate;
-        this.details = details;
-    }
+
 }

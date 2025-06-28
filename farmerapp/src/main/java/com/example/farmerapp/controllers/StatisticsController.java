@@ -65,11 +65,11 @@ public class StatisticsController {
                     animalBirthYears.put(animal.getId(), birthDate.getYear());
                 }
             } catch (Exception e) {
-                // silently ignore invalid dates
+
             }
 
             if (animal.getGender() != null) {
-                animalGenders.put(animal.getId(), animal.getGender().toLowerCase()); // normalize to lowercase
+                animalGenders.put(animal.getId(), animal.getGender().toLowerCase());
             }
 
             List<AnimalEvent> events = eventService.getEventsByAnimalId(animal.getId());

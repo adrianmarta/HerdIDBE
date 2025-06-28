@@ -49,5 +49,17 @@ public class UserService {
     public void deleteUser(String id) {
         userRepository.deleteById(id);
     }
+    public boolean exists(String id)
+    {
+        List<User> users = userRepository.findAll();
+        for (User user : users)
+        {
+            if(user.getId().equals(id))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 

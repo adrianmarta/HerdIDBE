@@ -10,6 +10,7 @@ import com.example.farmerapp.repositories.AnimalEventRepository;
 import com.example.farmerapp.repositories.AnimalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,21 +25,16 @@ public class AnimalService {
     @Autowired
     private UserService userService;
 
-    // Create a new animal
     public Animal createAnimal(Animal animal) {
-        // Check if animal already exists in any user's list
         if (animalRepository.findById(animal.getId()).isPresent()) {
             throw new IllegalArgumentException("An animal with this ID already exists in the system.");
         }
         return animalRepository.save(animal);
     }
-
-    // Get all animals
     public List<Animal> getAllAnimals() {
         return animalRepository.findAll();
     }
 
-    // Get animal by ID
     public Optional<Animal> getAnimalById(String id) {
         return animalRepository.findById(id);
     }
@@ -46,7 +42,6 @@ public Animal saveAnimal(Animal animal)
 {
     return animalRepository.save(animal);
 }
-    // Update an animal
     public Animal updateAnimal(String id, AnimalUpdateDTO updateDTO) {
         Optional<Animal> OptionalAnimal= animalRepository.findById(id);
         if (OptionalAnimal.isPresent()){
@@ -84,8 +79,15 @@ public Animal saveAnimal(Animal animal)
         return animal;
     }
 
-    public boolean isAnimalExist(String animalId) {
-        return animalRepository.existsById(animalId);
+    public boolean isAnimalExist(String animalId,String userId) {
+
+        List<Animal> animals=animalRepository.findByOwnerId(userId);
+        for (Animal animal : animals)
+        {
+            if (animal.getId().equals(animalId))
+                return true;
+        }
+     return false;
     }
 
     public List<Animal> searchAnimals(String query, String userId) {
@@ -101,7 +103,7 @@ public Animal saveAnimal(Animal animal)
                 )
                 .collect(Collectors.toList());
     }
-    // Delete an animal
+
     public void deleteAnimal(String id) {
         animalRepository.deleteById(id);
     }

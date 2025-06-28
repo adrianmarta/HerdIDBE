@@ -39,9 +39,6 @@ public class CountingSessionService {
                 });
     }
 
-    public List<CountingSession> getCountingSessionsByOwnerId(String ownerId) {
-        return countingSessionRepository.findByOwnerId(ownerId);
-    }
 
     public Page<CountingSession> getCountingSessionsByOwnerId(String ownerId, Pageable pageable) {
         return countingSessionRepository.findByOwnerId(ownerId, pageable);
@@ -49,5 +46,9 @@ public class CountingSessionService {
 
     public Optional<CountingSession> getCountingSessionById(String id) {
         return countingSessionRepository.findById(id);
+    }
+    public void deleteSession( String id)
+    {
+        countingSessionRepository.deleteById(id);
     }
 } 

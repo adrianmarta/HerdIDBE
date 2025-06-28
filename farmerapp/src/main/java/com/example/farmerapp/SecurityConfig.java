@@ -1,6 +1,5 @@
 package com.example.farmerapp;
 
-//import com.example.farmerapp.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,7 +21,7 @@ public class SecurityConfig {
         http
                 .authorizeRequests()
                 .requestMatchers("/api/auth/**", "/api/events/**","/api/users/**","/api/animals/**","/api/folders/**","/api/statistics/**","/api/counting-sessions/**","/api/transfers/**").permitAll()
-                .anyRequest().authenticated() // Require authentication for other routes
+                .anyRequest().authenticated()
                 .and()
                 .csrf().disable()
                 .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

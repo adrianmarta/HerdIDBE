@@ -17,13 +17,11 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // Decode the secret key from Base64
     private SecretKey getSigningKey() {
         byte[] decodedKey = Base64.getDecoder().decode(secretKey);
         return Keys.hmacShaKeyFor(decodedKey);
     }
 
-    // ✅ Generate JWT Token
     public String generateToken(String userId) {
         return Jwts.builder()
                 .setSubject(userId)

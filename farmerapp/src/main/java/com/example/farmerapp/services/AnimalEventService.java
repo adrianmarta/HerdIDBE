@@ -39,4 +39,17 @@ public class AnimalEventService {
     public void deleteEventsByIds(List<String> ids) {
         eventRepository.deleteAllById(ids);
     }
+    public List<AnimalEvent> getEventsByType(String eventType) {
+        return eventRepository.findAll().stream()
+                .filter(event -> eventType.equalsIgnoreCase(event.getEventType()))
+                .toList();
+    }
+    public List<AnimalEvent> getEventsByAnimalIdAndTypeAndDate(String animalId, String eventType, java.time.LocalDate start, java.time.LocalDate end) {
+        return getEventsByAnimalId(animalId).stream()
+                .filter(event -> eventType.equalsIgnoreCase(event.getEventType())
+                        && event.getEventDate() != null
+                        && !event.getEventDate().isBefore(start)
+                        && !event.getEventDate().isAfter(end))
+                .toList();
+    }
 }

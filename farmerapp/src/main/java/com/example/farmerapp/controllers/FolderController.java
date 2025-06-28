@@ -1,11 +1,9 @@
 package com.example.farmerapp.controllers;
 
-import com.example.farmerapp.FolderRequest;
-import com.example.farmerapp.JwtUtil;
+import com.example.farmerapp.models.FolderRequest;
 import com.example.farmerapp.models.Folder;
 import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.User;
-import com.example.farmerapp.repositories.UserRepository;
 import com.example.farmerapp.services.FolderService;
 import com.example.farmerapp.services.AnimalService;
 import com.example.farmerapp.services.UserService;
@@ -50,7 +48,7 @@ public class FolderController {
                     .filter(animal -> !animalIds.contains(animal.getId()))
                     .collect(Collectors.toList());
             folder.setAnimals(updatedAnimals);
-            folderService.updateFolder(folderId, folder);
+            folderService.updateFolder(folder);
             return ResponseEntity.ok(folder);
         }
         return ResponseEntity.status(404).body(null);
@@ -64,7 +62,9 @@ public class FolderController {
         if (ownerOptional.isEmpty()) {
             return ResponseEntity.status(404).body(null);
         }
-
+        if (folderRequest.getName() == null || folderRequest.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
         User owner = ownerOptional.get();
 
         Folder savedFolder = folderService.createFolder(folderRequest,owner);
@@ -73,13 +73,13 @@ public class FolderController {
 
     @GetMapping("/{folderId}/animals")
     public ResponseEntity<?> getAnimalsInFolder(@PathVariable String folderId) {
-        Optional<Folder> folderOptional = folderService.getFolderById(folderId);
-        if (folderOptional.isPresent()) {
-            Folder folder = folderOptional.get();
-            List<Animal> animals = folder.getAnimals();
+        String userId = (String) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        java.util.List<com.example.farmerapp.models.Animal> userAnimals = animalService.getAnimalByUserId(userId);
+        try {
+            java.util.List<com.example.farmerapp.models.Animal> animals = folderService.getAnimalsInFolderForUser(folderId, userId, userAnimals);
             return ResponseEntity.ok(animals);
-        } else {
-            return ResponseEntity.status(404).body("Folder not found");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
         }
     }
     @PutMapping("/{folderId}/add-existing-animal/{animalId}")
@@ -94,7 +94,7 @@ public class FolderController {
                 return ResponseEntity.status(400).body("Animal already exists in the folder.");
             }
             folder.getAnimals().add(animal);
-            folderService.updateFolder(folderId, folder);
+            folderService.updateFolder(folder);
             return ResponseEntity.ok(folder);
         }
         return ResponseEntity.status(404).body("Folder or Animal not found.");
@@ -120,15 +120,14 @@ public class FolderController {
         }
         List<Animal> newAnimalsToAdd = animalService.getAnimalsByIds(animalIds);
         folder.getAnimals().addAll(newAnimalsToAdd);
-        folderService.updateFolder(folderId, folder);
+        folderService.updateFolder( folder);
         return ResponseEntity.ok("All selected animals have been successfully added.");
     }
 
-    // Update a folder
     @PutMapping("/{id}")
     public ResponseEntity<Folder> updateFolder(@PathVariable String id, @RequestBody FolderRequest folderRequest) {
         Optional<Folder> folder=folderService.getFolderById(id);
-        return ResponseEntity.ok(folderService.updateFolder(folderRequest.getName(),folder.get()));
+        return ResponseEntity.ok(folderService.updateFolderName(folderRequest.getName(),folder.get()));
     }
     @GetMapping("/compare/{folderId1}/{folderId2}")
     public ResponseEntity<List<String>> compareFolders(
@@ -137,11 +136,11 @@ public class FolderController {
         try {
             List<String> animalIds = folderService.compareFolders(folderId1, folderId2)
                     .stream()
-                    .map(Animal::getId) // Extract only the IDs
+                    .map(Animal::getId)
                     .collect(Collectors.toList());
             return ResponseEntity.ok(animalIds);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(404).body(null); // Folders not found
+            return ResponseEntity.status(404).body(null);
         }
     }
     @DeleteMapping("/{id}")

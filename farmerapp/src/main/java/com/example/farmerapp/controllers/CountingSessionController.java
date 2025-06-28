@@ -45,7 +45,12 @@ public class CountingSessionController {
                 })
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
-
+@DeleteMapping("/delete/{sessionId}")
+public ResponseEntity<Void> deleteSession(@PathVariable String sessionId)
+{
+    countingSessionService.deleteSession(sessionId);
+    return ResponseEntity.noContent().build();
+}
     @GetMapping()
     public Page<CountingSession> getCountingSessionsByOwnerId(
             @RequestParam(defaultValue = "0") int page,

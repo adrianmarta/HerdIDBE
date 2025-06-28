@@ -14,10 +14,10 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "animals") // MongoDB collection name
+@Document(collection = "animals")
 public class Animal {
 
-    // Getters and Setters
+
     @Id
     @Pattern(regexp = "^RO\\d{10}$", message = "ID must start with 'RO' followed by a 10-digit number")
     private String id;
@@ -27,15 +27,15 @@ public class Animal {
     private boolean producesMilk;
     @DBRef
     private List<AnimalEvent> events = new ArrayList<>();
-    private String birthDate; // Stores month and year of birth
+    private String birthDate;
     @JsonBackReference
     @DBRef
     private User owner;
 
-    // Default constructor (required by MongoDB)
+
     public Animal() {}
-    private List<byte[]> photos = new ArrayList<>();
-    // Constructor with parameters
+
+
     public Animal(String id, String gender, String birthDate, String species, boolean producesMilk, User owner) {
         this.id = id;
         this.gender = gender;

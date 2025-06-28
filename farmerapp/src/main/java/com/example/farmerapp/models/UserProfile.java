@@ -1,4 +1,4 @@
-package com.example.farmerapp;
+package com.example.farmerapp.models;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -14,7 +14,6 @@ public class UserProfile {
     private String address;
     private String phoneNumber;
 
-    // Constructor
     public UserProfile(String id, String name, String dob, String address,String phoneNumber) {
         this.id = id;
         this.name = name;
@@ -23,6 +22,4 @@ public class UserProfile {
         this.phoneNumber=phoneNumber;
     }
 
-    // Getters and setters
-    // ...
 }

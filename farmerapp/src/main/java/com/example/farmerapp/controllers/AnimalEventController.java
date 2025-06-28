@@ -1,7 +1,7 @@
 package com.example.farmerapp.controllers;
 
 import com.example.farmerapp.dto.*;
-import com.example.farmerapp.AnimalEventMapper;
+import com.example.farmerapp.models.AnimalEventMapper;
 import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.AnimalEvent;
 import com.example.farmerapp.services.AnimalEventService;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/events")
@@ -34,7 +35,7 @@ public class AnimalEventController {
     }
 
 
-    @PostMapping("/{id}/add-event")
+    @PostMapping("/{id}/add-event")// adauga eveniment la un animal
     public ResponseEntity<String> addEventToAnimal(@PathVariable String id, @RequestBody AnimalEvent event) {
         try {
             eventService.addEventToAnimal(id, event);
@@ -43,7 +44,7 @@ public class AnimalEventController {
             return ResponseEntity.status(404).body("Animalul nu a fost găsit.");
         }
     }
-    @GetMapping("/animal/{animalId}")
+    @GetMapping("/animal/{animalId}")//evenimentele unui animal
     public ResponseEntity<List<AnimalEvent>> getEventsByAnimalId(@PathVariable String animalId) {
         List<AnimalEvent> events = eventService.getEventsByAnimalId(animalId);
         return ResponseEntity.ok(events);
@@ -107,7 +108,7 @@ public class AnimalEventController {
         return ResponseEntity.ok(eventTypes);
     }
 
-    @GetMapping("/sickness-names")
+    @GetMapping("/sickness-names")//returneaza numele bolilor inregistrate de un utilizator
     public ResponseEntity<List<String>> getSicknessNames() {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
@@ -124,7 +125,7 @@ public class AnimalEventController {
         return ResponseEntity.ok(sicknessNames);
     }
 
-    @GetMapping("/vaccine-names")
+    @GetMapping("/vaccine-names")//returneaza numele vaccinurilor inregistrate de un utilizator
     public ResponseEntity<List<String>> getVaccineNames() {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
@@ -145,6 +146,21 @@ public class AnimalEventController {
     public ResponseEntity<String> deleteEventsBulk(@RequestBody List<String> ids) {
         eventService.deleteEventsByIds(ids);
         return ResponseEntity.ok("Evenimentele au fost șterse cu succes.");
+    }
+
+    @GetMapping("/by-type/{eventType}")// returneaza animalele care au evenimentele inregistrata intr-o perioada
+    public ResponseEntity<List<Animal>> getAnimalsByEventTypeAndDate(
+            @PathVariable String eventType,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Animal> userAnimals = animalService.getAnimalByUserId(userId);
+        java.time.LocalDate start = java.time.LocalDate.parse(startDate);
+        java.time.LocalDate end = java.time.LocalDate.parse(endDate);
+        List<Animal> filtered = userAnimals.stream()
+                .filter(animal -> !eventService.getEventsByAnimalIdAndTypeAndDate(animal.getId(), eventType, start, end).isEmpty())
+                .toList();
+        return ResponseEntity.ok(filtered);
     }
 
 }

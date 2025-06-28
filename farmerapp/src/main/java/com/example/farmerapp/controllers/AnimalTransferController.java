@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/transfers")
@@ -35,8 +36,8 @@ public class AnimalTransferController {
     public ResponseEntity<?> acceptTransfer(@PathVariable String transferId) {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return animalTransferService.acceptTransfer(transferId, userId)
-                .map(transfer -> ResponseEntity.ok().body("Transfer completed successfully."))
-                .orElse(ResponseEntity.badRequest().body("Failed to accept transfer. It might be invalid or not addressed to you."));
+                .map(transfer -> ResponseEntity.ok().body(Map.of("message", "Transfer completed successfully.")))
+                .orElse(ResponseEntity.badRequest().body(Map.of("error", "Failed to accept transfer. It might be invalid or not addressed to you.")));
     }
 
     @GetMapping("/sent")
@@ -49,5 +50,20 @@ public class AnimalTransferController {
     public ResponseEntity<List<AnimalTransfer>> getReceivedTransfers() {
         String receiverId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return ResponseEntity.ok(animalTransferService.getReceivedTransfers(receiverId));
+    }
+
+    @PostMapping("/{transferId}/reject")
+    public ResponseEntity<?> rejectTransfer(@PathVariable String transferId) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return animalTransferService.rejectTransfer(transferId, userId)
+                .map(transfer -> ResponseEntity.ok().body(Map.of("message", "Transfer rejected successfully.")))
+                .orElse(ResponseEntity.badRequest().body(Map.of("error", "Failed to reject transfer. It might be invalid or not addressed to you.")));
+    }
+
+    @DeleteMapping("/{transferId}")
+    public ResponseEntity<Void> deleteTransfer(@PathVariable String transferId)
+    {
+        animalTransferService.deleteTransfer(transferId);
+        return ResponseEntity.noContent().build();
     }
 } 

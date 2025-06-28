@@ -1,6 +1,6 @@
 package com.example.farmerapp.services;
 
-import com.example.farmerapp.FolderRequest;
+import com.example.farmerapp.models.FolderRequest;
 import com.example.farmerapp.models.Animal;
 import com.example.farmerapp.models.Folder;
 import com.example.farmerapp.models.User;
@@ -33,9 +33,16 @@ public class FolderService {
         return folderRepository.findById(id);
     }
 
-    public Folder updateFolder(String name, Folder folder) {
+    public Folder updateFolderName(String name, Folder folder) {
         if (folderRepository.existsById(folder.getId())) {
             folder.setName(name);
+            return folderRepository.save(folder);
+        } else {
+            throw new IllegalArgumentException("Folder not found for update.");
+        }
+    }
+    public Folder updateFolder( Folder folder) {
+        if (folderRepository.existsById(folder.getId())) {
             return folderRepository.save(folder);
         } else {
             throw new IllegalArgumentException("Folder not found for update.");
@@ -59,14 +66,32 @@ public class FolderService {
         if (folder1Opt.isPresent() && folder2Opt.isPresent()) {
             List<Animal> folder1Animals = folder1Opt.get().getAnimals();
             List<Animal> folder2Animals = folder2Opt.get().getAnimals();
-
-            // Return animals in folder1 that are not in folder2
             return folder1Animals.stream()
                     .filter(animal -> !folder2Animals.contains(animal))
                     .collect(Collectors.toList());
         } else {
             throw new IllegalArgumentException("One or both folders not found.");
         }
+    }
+
+    public List<Animal> getAnimalsInFolderForUser(String folderId, String userId, List<Animal> userAnimals) {
+        Optional<Folder> folderOptional = folderRepository.findById(folderId);
+        if (folderOptional.isEmpty()) {
+            throw new IllegalArgumentException("Folder not found.");
+        }
+        Folder folder = folderOptional.get();
+        List<Animal> folderAnimals = folder.getAnimals();
+        List<Animal> validAnimals = folderAnimals.stream()
+                .filter(animal -> userAnimals.stream().anyMatch(userAnimal -> userAnimal.getId().equals(animal.getId())))
+                .collect(Collectors.toList());
+        List<Animal> toRemove = folderAnimals.stream()
+                .filter(animal -> userAnimals.stream().noneMatch(userAnimal -> userAnimal.getId().equals(animal.getId())))
+                .collect(Collectors.toList());
+        if (!toRemove.isEmpty()) {
+            folder.getAnimals().removeAll(toRemove);
+            folderRepository.save(folder);
+        }
+        return validAnimals;
     }
 
 }

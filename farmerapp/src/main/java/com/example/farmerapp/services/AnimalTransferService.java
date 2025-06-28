@@ -38,7 +38,10 @@ public class AnimalTransferService {
     }
 
     public List<AnimalTransfer> getPendingTransfersForUser(String userId) {
-        return animalTransferRepository.findByReceiverIdAndStatus(userId, TransferStatus.PENDING);
+        return animalTransferRepository.findByReceiverIdAndStatus(userId, TransferStatus.PENDING)
+                .stream()
+                .sorted((t1, t2) -> t2.getTransferDate().compareTo(t1.getTransferDate()))
+                .toList();
     }
 
     @Transactional
@@ -62,10 +65,37 @@ public class AnimalTransferService {
     }
 
     public List<AnimalTransfer> getSentTransfers(String senderId) {
-        return animalTransferRepository.findBySenderId(senderId);
+        return animalTransferRepository.findBySenderId(senderId)
+                .stream()
+                .sorted((t1, t2) -> t2.getTransferDate().compareTo(t1.getTransferDate()))
+                .toList();
     }
 
     public List<AnimalTransfer> getReceivedTransfers(String receiverId) {
-        return animalTransferRepository.findByReceiverId(receiverId);
+        return animalTransferRepository.findByReceiverId(receiverId)
+                .stream()
+                .sorted((t1, t2) -> t2.getTransferDate().compareTo(t1.getTransferDate()))
+                .toList();
+    }
+
+    public Optional<AnimalTransfer> rejectTransfer(String transferId, String receiverId) {
+        Optional<AnimalTransfer> transferOptional = animalTransferRepository.findById(transferId);
+        if (transferOptional.isEmpty() || !transferOptional.get().getReceiverId().equals(receiverId)
+                || transferOptional.get().getStatus() != TransferStatus.PENDING) {
+            return Optional.empty();
+        }
+        AnimalTransfer transfer = transferOptional.get();
+        transfer.setStatus(TransferStatus.REJECTED);
+        return Optional.of(animalTransferRepository.save(transfer));
+    }
+
+    public void deleteTransfer( String transferId)
+    {
+        Optional<AnimalTransfer> transfer=animalTransferRepository.findById(transferId);
+        if(transfer.isPresent())
+        {
+            AnimalTransfer animalTransfer=transfer.get();
+            animalTransferRepository.delete(animalTransfer);
+        }
     }
 } 

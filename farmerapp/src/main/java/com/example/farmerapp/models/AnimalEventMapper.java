@@ -1,4 +1,4 @@
-package com.example.farmerapp;
+package com.example.farmerapp.models;
 
 import com.example.farmerapp.dto.*;
 import com.example.farmerapp.models.AnimalEvent;
